@@ -1,0 +1,9 @@
+# Wildcard node name so that all nodes can use this
+/**:
+  ros__parameters:
+    # upright position to get neutral values
+    upright: [1500, 1500, 1500, 1500, 1500, 1500,
+            1500, 1500, 1500, 1500, 1500, 1500]
+    # slight positive (rule of thumb) rotation around the x-axis
+    rotated: [1500, 2000, 1500, 1000, 1500, 1000,
+            1500, 1500, 1500, 1500, 1500, 1500]

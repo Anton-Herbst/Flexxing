@@ -1,0 +1,20 @@
+docker run -it --rm -v /dev:/dev -v /dev/shm:/dev/shm --privileged --net=host microros/micro-ros-agent:$ROS_DISTRO udp4 --port 8888 -v6
+
+# UDPv4 micro-ROS Agent
+
+BREAKDOWN:
+docker 	= puts code in a container, independent of the PC (host)
+run 	= launches docker from an image
+-i 	= interactive = lets you interact with the container, open to commands
+-t 	= Teletypewrite = lets you see logs
+--rm 	= remove = automaticly removes ocntainer on exit for a clean system
+-v /dev:/dev	= Bind mounts, /dev is linux hardware directionary with : the container 
+			now has access to the connected microcontroller
+-v /dev/shm:/dev/shm = Binds memory so the container doesnt run out and also
+			runs faster processes
+--priveleged	= break the container barriers, full access to host
+--net=host	= share the host's network
+microros/micro-ros-agent:$ROS_DISTRO	= Docker image with ROS2 version on the host
+udp4		= tells the docker to use UDP network protocol
+--port 8888	= specifies where the docker needs to listen
+-v6		= verbose logging at level 6

@@ -1,0 +1,22 @@
+imu_data_x 
+Task: Acceleration + Angular rate (Raw data)
+Type: geometry_msgs/msg/Accel
+
+imu_gravity_data_x
+Task: Gravity Vector (internal calculation, play around with this)
+Type: gemoetry_msgs/msg/Vector3
+
+imu_gyrobias_data_x
+Task: Gyroscope Offset
+Type: geometry_msgs/msg/Vector3
+
+imu_rotation_data_x 
+Task: Segment 3D rotation
+Type: geometry_msgs/msg/Quaternion
+
+mag_data_x (measuring earths magnetic field)
+Task: Magnetometer field vector (Spikes von 2^8 und 2^16 rausfiltern)
+Type: geometry_msgs/msg/Vector3
+
+BOTH magnetic and imu measure rotation
+Magnetic sensors data comes in less frequent (~1kHz max while IMU can go up to 8kHz)
