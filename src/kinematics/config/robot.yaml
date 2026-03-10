@@ -1,0 +1,6 @@
+# Here are some geometric properties of the robot stored
+# wildcard so any node can read this
+/**:
+  ros__parameters:
+    'd': 0.1
+    'L_segment': 0.12

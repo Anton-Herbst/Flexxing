@@ -40,6 +40,7 @@ class Visualizer_Tip(Node):
         self.axis.view_init(elev=30, azim=-65)
         # create a quiver (arrow/vector) starting upright
         self.vector = self.axis.quiver(0, 0, 0, 0, 0, self.length, color='r', arrow_length_ratio=0.1)
+        self.axis.set_aspect('equal')
         # limit the axis
         self.axis.set_xlim([-self.length, self.length])
         self.axis.set_ylim([-self.length, self.length])

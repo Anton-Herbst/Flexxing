@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'configuration'
+package_name = 'kinematics'
 
 setup(
     name=package_name,
@@ -14,7 +14,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='anton',
-    maintainer_email='anton@todo.todo',
+    maintainer_email='anton-herbst@gmx.net',
     description='TODO: Package description',
     license='Apache-2.0',
     extras_require={
@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'bending_IMU_acc_tip = configuration.bending_IMU_acc_tip:main'
+            'G2X_imu_acc_all = kinematics.G2X_imu_acc_all:main',
         ],
     },
 )

@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 """
-* This file grabs the sensor's transformed vector. From it deltax and deltay are derived and published.
-
-TODO list
-! change publish_tip to publish transformed Vectors. /pc/transformed_tip
+* This file grabs the tips sensors transformed vector. From it the generalized coordinates are calulated and then published.
 """
 
 import numpy as np                                                  # for math stuff
@@ -13,32 +10,33 @@ from rclpy.node import Node                                         # ROS node c
 from geometry_msgs.msg import Vector3                               # datatype for three dimensional vectors (used in subscribing mag_sensor)
 from std_msgs.msg import Float64MultiArray                          # datatype used for publishing PCC values
 
-class Bending_IMU_Acc(Node):
+class Gen_coords_imu_acc_tip(Node):
 
     # * function called on creation
     def __init__(self):
         # it insists upon itself
-        super().__init__('bending_IMU_acc')
+        super().__init__('gen_coords_imu_acc_tip')
+
         # * ROS related
         # subscribe to the transformed vector topic
         self.subscription = self.create_subscription(
             msg_type    = Vector3,
-            topic       = '/pc/transformed_IMU_acc_tip',
-            callback    = self.callback_tip,
+            topic       = '/pc/transformed_imu_acc_tip',
+            callback    = self.callback_acc_tip,
             qos_profile = 10 )
         # create a publisher for the bending results
         self.publisher = self.create_publisher(
-            msg_type    = Float64MultiArray,            # it will transport [deltax, deltay, delta (the norm of the other two)]
-            topic       = '/pc/bending_IMU_acc_tip',
+            msg_type    = Float64MultiArray,            # it will transport [delta_x, delta_y, delta (the norm)] for the tip sensor
+            topic       = '/pc/gen_coords_imu_acc_tip',
             qos_profile = 10 )
     
     # * on receiving new info
-    def callback_tip(self, msg) -> None:
+    def callback_acc_tip(self, msg: Vector3) -> None:
         # use the other functions and then publish
         phi = self.get_bending_orientation(msg)
         theta = self.get_vertical_angle(msg)
         msg_pub = Float64MultiArray()
-        msg_pub.data = list(self.get_bending(phi, theta))
+        msg_pub.data = list(self.get_generalized_coordinates(theta, phi))
         self.publisher.publish(msg_pub)
 
     # * function determing plane in which the robot is bent
@@ -56,16 +54,16 @@ class Bending_IMU_Acc(Node):
         # return a python float
         return theta.item()
     
-    # * function giving bending [delta_x, delty_y, delta]
-    def get_bending(self, phi: float, theta: float) -> tuple[float, float, float]:
-        delta_x = theta*np.cos(phi)
-        delta_y = theta*np.sin(phi)
-        # delta = theta (no need to compute that, but a*cos²+*a*sin² = a)
-        return (delta_x.item(), delta_y.item(), theta)
-    
+    # * function to get the generalized coordinates
+    def get_generalized_coordinates(self, theta:float, phi: float) -> tuple[float, float, float]:
+        # this only works with local angles, which we calculate beforehand
+        delta_x = theta * np.cos(phi)
+        delta_y = theta * np.sin(phi)
+        return delta_x, delta_y, theta
+
 def main():
     rclpy.init()
-    mynode = Bending_IMU_Acc()
+    mynode = Gen_coords_imu_acc_tip()
     rclpy.spin(mynode)
     mynode.destroy_node()
     rclpy.shutdown()

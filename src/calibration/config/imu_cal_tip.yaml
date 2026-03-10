@@ -1,0 +1,10 @@
+# This file is a default that will be stored altered locally to survive rebuilds
+# Rotation matrix from raw sensor data to local coordinates for sensor 4 only
+imu_acc:
+  - [1.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0]
+  - [0.0, 0.0, 1.0]
+imu_grav:
+  - [1.0, 0.0, 0.0]
+  - [0.0, 1.0, 0.0]
+  - [0.0, 0.0, 1.0]

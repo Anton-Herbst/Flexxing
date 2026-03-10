@@ -229,7 +229,7 @@ class CalibrateMagneticSensor(Node):
     # this enables reloading calibration from a prior build (less annoying)    
     def write_down_axis(self, matrix: list) -> None:
         # path to the needed config file (expanduser since python cant handle ~)
-        local_dir = os.path.expanduser('~/.ros/sensor/calibration')
+        local_dir = os.path.expanduser('~/.ros/calibration')
         local_config_file = os.path.join(local_dir, 'mag_cal_tip.yaml')
         # create a local dir (if it hasnt been made)
         os.makedirs(local_dir, exist_ok=True)

@@ -1,6 +1,7 @@
 from setuptools import find_packages, setup
+from glob import glob
 
-package_name = 'sensor'
+package_name = 'calibration'
 
 setup(
     name=package_name,
@@ -11,13 +12,19 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, 
             ['package.xml']),
+        # reference the config files
+        ('share/' + package_name + '/config',
+            glob('config/*.yaml')),
+        # reference the launch files
+        ('share/' + package_name + '/launch',
+            glob('launch/*.launch.py'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='anton',
-    maintainer_email='anton@todo.todo',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer_email='anton-herbst@gmx.net',
+    description='Package only dedicated to launch calibration algorithms that store transformation matrices in  ~/.ros/calibration/*.yaml files.',
+    license='Apache-2.0',
     extras_require={
         'test': [
             'pytest',
@@ -25,10 +32,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'publish_imu_acc_tip = sensor.publish_imu_acc_tip:main',
-            'publish_imu_acc_all = sensor.publish_imu_acc_all:main',
-            'gen_coords_imu_acc_tip = sensor.generalized_coords_imu_acc_tip:main',
-            'gen_coords_imu_acc_all = sensor.generalized_coords_imu_acc_all:main',
         ],
     },
 )
