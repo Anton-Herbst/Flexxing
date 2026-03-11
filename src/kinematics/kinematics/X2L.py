@@ -20,23 +20,23 @@ class Inverse_PCC_X2L(Node):
         super().__init__('inverse_PCC_X2L')
 
         # * ROS related
-        # subscribe to incoming tendon lengths # TODO : Make new in package trajectory
+        # subscribe to incoming tendon lengths
         self.subscription = self.create_subscription(
             msg_type    =  Vector3,
-            topic       = '/pc/trajectory',
+            topic       = '/pc/controller/trajectory',
             callback    = self.callback_trajectory,
             qos_profile = 10 )
         # publisher giving away the tendon lengths # TODO : Make new node in package servos to receive this
         self.publisher_ = self.create_publisher( 
             msg_type    = Float64MultiArray,
-            topic       = '/pc/tendon_lengths',
+            topic       = '/pc/servos/tendon_lengths',
             qos_profile = 10 )
 
     # * callback on receiving new tendon lengths
     def callback_trajectory(self, msg: Float64MultiArray) -> None:
         # read incoming target positions
         x, y, z = msg.x, msg.y, msg.z
-        delta_x, delta_y = self.inverse_kinematics_X2G(x, y, z)
+        delta_x, delta_y, theta = self.inverse_kinematics_X2G(x, y, z)
 
     # * function describing inverse kinematics from endeffector X to configuration G
     def inverse_kinematics_X2G(self, x: float, y: float, z: float) -> np.ndarray:

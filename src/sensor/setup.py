@@ -27,8 +27,8 @@ setup(
         'console_scripts': [
             'publish_imu_acc_tip = sensor.publish_imu_acc_tip:main',
             'publish_imu_acc_all = sensor.publish_imu_acc_all:main',
-            'gen_coords_imu_acc_tip = sensor.generalized_coords_imu_acc_tip:main',
-            'gen_coords_imu_acc_all = sensor.generalized_coords_imu_acc_all:main',
+            'generalized_coords_imu_acc_tip = sensor.generalized_coords_imu_acc_tip:main',
+            'generalized_coords_imu_acc_all = sensor.generalized_coords_imu_acc_all:main',
         ],
     },
 )

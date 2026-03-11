@@ -4,3 +4,4 @@
   ros__parameters:
     'd': 0.1
     'L_segment': 0.12
+    'L_total': 0.24

@@ -13,31 +13,29 @@ import matplotlib.pyplot as plt                                     # for visual
 import threading                                                    # so plt and ROS can work together
 import numpy as np                                                  # useful for math stuff
 
-class Visualizer_Tip(Node):
+class Visualizer_imu_acc_tip(Node):
+
+    # * function called on creation
     def __init__(self):
 
         # "it insists upon itself"
-        super().__init__('visualize_IMU_acc_tip')
+        super().__init__('visualize_imu_acc_tip')
         
         # * ROS related
-        # create a subscriber to get the bending out of the nodes sensor/publish_tip released topics
-        self.subscription_tip  =  self.create_subscription(
-            msg_type    = Float64MultiArray, 
-            topic       = '/pc/bending_IMU_acc_tip',
-            callback    = self.callback_tip, 
-            qos_profile = 10)
+        # create a subscriber to get the endeffectors position from kinematics/G2X_imu_acc_tip
+        self.subscription_tip  =  self.create_subscription( Vector3, '/pos/endeffector', self.callback_tip, 10 )
         # * Node parameters
         # robots length from bottom to tip (since we only use one sensor rn)
-        self.length = 0.24 # keep this a float
+        self.length = 0.24 
         # * Visual related
         # interactive mode on
         plt.ion()  
         plt.style.use('_mpl-gallery')
         # create a window 
-        self.fig = plt.figure(figsize = (8,8), num=f"Direction of the tip")
+        self.fig = plt.figure(figsize = (8,8), num=f"Direction of the tip, using imu linear acceleration data")
         # add an 3d plot in it
         self.axis = self.fig.add_subplot(projection='3d')
-        self.axis.view_init(elev=30, azim=-65)
+        self.axis.view_init(elev=30, azim=180)
         # create a quiver (arrow/vector) starting upright
         self.vector = self.axis.quiver(0, 0, 0, 0, 0, self.length, color='r', arrow_length_ratio=0.1)
         self.axis.set_aspect('equal')
@@ -59,30 +57,9 @@ class Visualizer_Tip(Node):
         self.axis.text(0, 0, self.length, "Z", color='k', fontsize=16)
 
     # * callback on receiving bending information
-    def callback_tip(self, msg: Float64MultiArray) -> None: 
-        # change the domain (lagrange to cartesion, with PCC thats forwards kinematics)
-        endeffector = self.forward_kinematics(msg.data)
-        # redraw the figure
-        self.redraw(endeffector)
-    
-    # * function tasked to go from lagrangian coords to cartesian
-    def forward_kinematics(self, data: list[float]) -> Vector3:
-        # first extract the incoming messages data delta_x and delta_y
-        [delta_x, delta_y, delta] = data
-        # watch out for the singularity (no bending done)
-        if delta < 1e-3:
-            return Vector3(x=0.0, y=0.0, z=self.length)
-        # prefactor for the vector (here singularity appears)
-        factor = self.length / (delta ** 2)
-        # prepare a vector
-        position = Vector3()
-        # fill it according to forward kinematics
-        position.x = factor * (1 - np.cos(delta)) * delta_x
-        position.y = factor * (1 - np.cos(delta)) * delta_y
-        position.z = factor * np.sin(delta) * delta
-        # return it
-        return position
-
+    # redraw the figure with the new pose
+    def callback_tip(self, msg: Vector3) -> None: self.redraw(msg)
+        
     # * function tasked to display new pose
     def redraw(self, new_vec: Vector3) -> None:
         # first delete the old quiver
@@ -96,7 +73,7 @@ class Visualizer_Tip(Node):
 
 def main():
     rclpy.init()
-    mynode = Visualizer_Tip()
+    mynode = Visualizer_imu_acc_tip()
     # spin the created note in a background tab 
     spin_thread = threading.Thread(target=rclpy.spin, args=(mynode,), daemon=True)
     spin_thread.start()
