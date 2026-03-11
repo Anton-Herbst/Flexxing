@@ -2,7 +2,7 @@
 
 """
 * This file is to see if the transformation and the following calculations are realistic.
-* It will simply read bending and display the sensor readings as a robots pose.
+* It will read in the position of the endeffector directly from the kinematics package and just display it.
 """
 
 import rclpy                                                        # to be able to use ROS with python
