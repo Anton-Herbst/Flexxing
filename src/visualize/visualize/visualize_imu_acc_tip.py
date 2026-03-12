@@ -39,7 +39,7 @@ class Visualizer_imu_acc_tip(Node):
         self.fig = plt.figure(figsize = (8,8), num=f"Direction of the tip, using imu linear acceleration data")
         # add an 3d plot in it
         self.axis = self.fig.add_subplot(projection='3d')
-        self.axis.view_init(elev=30, azim=180)
+        self.axis.view_init(elev=30, azim=20)
         # create a quiver (arrow/vector) starting upright
         self.vector = self.axis.quiver(0, 0, 0, 0, 0, self.length, color='r', arrow_length_ratio=0.1)
         self.axis.set_aspect('equal')

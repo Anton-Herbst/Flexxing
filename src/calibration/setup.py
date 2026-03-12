@@ -32,6 +32,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'imu_tip = calibration.imu_tip:main',
+            'imu_all = calibration.imu_all:main',
         ],
     },
 )
