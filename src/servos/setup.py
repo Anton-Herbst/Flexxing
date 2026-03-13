@@ -25,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'numbers = servos.numbers:main',
-            'static = servos.static:main'
+            'static = servos.static:main',
+            'plant = servos.plant:main',
         ],
     },
 )

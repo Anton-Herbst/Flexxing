@@ -5,3 +5,4 @@
     'd': 0.1
     'L_segment': 0.12
     'L_total': 0.24
+    'yaw_offset_top': 60 # in degrees
