@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
 """
-* This script takes the resulting tendon lengths from the G2L inverse kinematics node and publishes the error
-* between the current tendon lengths and the desired tendon lengths.
+* This script takes the resulting tendon lengths from the G2L (from measurements) and X2L (from trajectory) inverse kinematics nodes.
+* It then publishes the error between the real and the desired tendon lengths.
 """
 
 import numpy as np                                                  # for math stuff

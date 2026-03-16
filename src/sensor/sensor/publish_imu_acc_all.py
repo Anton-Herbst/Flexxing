@@ -48,10 +48,10 @@ class Publisher_imu_acc_all(Node):
             extracted_data = yaml.safe_load(stream = file_handle)
         # dict of transformation matrixes, use numpy for easy matrix multiplication
         self.matrix_rot = {
-            1: np.array(extracted_data['imu_calibration_all']['acc'][1]),
-            2: np.array(extracted_data['imu_calibration_all']['acc'][2]),
-            3: np.array(extracted_data['imu_calibration_all']['acc'][3]),
-            4: np.array(extracted_data['imu_calibration_all']['acc'][4]),}
+            1: np.array(extracted_data['imu_acc'][1]),
+            2: np.array(extracted_data['imu_acc'][2]),
+            3: np.array(extracted_data['imu_acc'][3]),
+            4: np.array(extracted_data['imu_acc'][4]),}
 
     # * callback function of sensor
     # immediatly transform raw data and publish resulting vector for all to see

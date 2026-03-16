@@ -27,8 +27,8 @@ class Controller(Node):
         self.subscription_error_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_error_bot', lambda msg: self.callback_tendon_error(msg, 'bot'), 10)
         self.subscription_error_top = self.create_subscription(Float64MultiArray, '/pc/tendon_error_top', lambda msg: self.callback_tendon_error(msg, 'top'), 10)
         # publisher for the servo
-        self.publisher_set_top = self.create_publisher(Float64MultiArray, '/pc/control_output_top', 10)
-        self.publisher_set_bot = self.create_publisher(Float64MultiArray, '/pc/control_output_bot', 10)
+        self.publisher_set_top = self.create_publisher(Float64MultiArray, '/pc/controller/output_top', 10)
+        self.publisher_set_bot = self.create_publisher(Float64MultiArray, '/pc/controller/output_bot', 10)
         # to identify them
         self.publisher_select = { 'top': self.publisher_set_top, 'bot': self.publisher_set_bot }
 

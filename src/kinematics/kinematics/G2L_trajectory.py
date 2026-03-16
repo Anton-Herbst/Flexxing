@@ -2,8 +2,7 @@
 
 """
 * This script is partial inverse kinematics of the PCC robot.
-* Its purpose is to convert incoming generalized coordinates to tendon lengths.
-* configuration G -> tendon length L
+* It takes the generealized coordinates produced by controller/trajectory_gen and gives out tendon lengths
 """
 
 import numpy as np                                                  # for math stuff
@@ -16,12 +15,11 @@ class Inverse_PCC_G2L_all(Node):
     # * function called on creation
     def __init__(self):
         # it insists upon itself
-        super().__init__('inverse_PCC_G2L_all')
+        super().__init__('inverse_PCC_G2L_trajectory')
 
         # * ROS related
-        # subscribe to incoming generalized coordinates for each segment published by sensor/gen_.._imu_acc_all
-        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/gen_coords_imu_acc_bot', lambda msg: self.gen_coords_imu_acc(msg, 'bot'), 10 )
-        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/gen_coords_imu_acc_top', lambda msg: self.gen_coords_imu_acc(msg, 'top'), 10 )
+        # subscribe to incoming generalized coordinates produced by controller/trajectory to get all generealiezd coordinates
+        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/trajectory', self.callback_trajectory, 10 )
         # publisher giving out lengths for all tendons for each segment
         self.publisher_top = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_top', 10 )
         self.publisher_bot = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_bot', 10 )
@@ -37,13 +35,17 @@ class Inverse_PCC_G2L_all(Node):
         self.yaw_offset = np.deg2rad(self.declare_parameter('yaw_offset_top', np.deg2rad(60)).value)
 
     # * callback on receiving new info
-    def gen_coords_imu_acc(self, msg: Float64MultiArray, segment: str) -> None:
+    def callback_trajectory(self, msg: Float64MultiArray) -> None:
         # extract incoming data
-        delta_x, delta_y, _ = msg.data
+        delta_x_bot, delta_y_bot, delta_x_top, delta_y_top = msg.data
         # calculate the tendon lengths
-        l_a, l_b, l_c = self.inverse_kinematics_G2L(delta_x, delta_y, segment)
+        l_1, l_2, l_3 = self.inverse_kinematics_G2L(delta_x_bot, delta_y_bot, 'bot')
         # publish the tendon lengths
-        self.publish_tendon_lengths(l_a, l_b, l_c, segment)
+        self.publish_tendon_lengths(l_1, l_2, l_3, 'bot')
+        # calculate the tendon lengths
+        l_4, l_5, l_6 = self.inverse_kinematics_G2L(delta_x_top, delta_y_top, 'top')
+        # publish the tendon lengths
+        self.publish_tendon_lengths(l_4, l_5, l_6, 'top')
 
     # * function to calculate tendon lengths from the generalized coordinates
     def inverse_kinematics_G2L(self, delta_x: float, delta_y: float, segment: str) -> tuple[float, float, float]:
@@ -69,7 +71,6 @@ class Inverse_PCC_G2L_all(Node):
         msg.data = [l_a, l_b, l_c]
         # publish the message
         self.publisher_select[segment].publish(msg)
-
 def main():
     rclpy.init()
     mynode = Inverse_PCC_G2L_all()

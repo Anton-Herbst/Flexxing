@@ -27,7 +27,7 @@ setup(
             'G2X_imu_acc_all = kinematics.G2X_imu_acc_all:main',
             'G2X_imu_acc_tip = kinematics.G2X_imu_acc_tip:main',
             'G2L_imu_acc_all = kinematics.G2L_imu_acc_all:main',
-            'X2L = kinematics.X2L:main',
+            'G2L_trajectory = kinematics.G2L_trajectory:main',
         ],
     },
 )

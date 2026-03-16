@@ -32,13 +32,14 @@ class Plant(Node):
 
         # * ROS related
         # subscribe to controllers output (publised topics from /controller/PI_controller.py)
-        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/control_output_top', lambda msg: self.callback_controller(msg, 'top'), 10)
-        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/control_output_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
+        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/controller/output_top', lambda msg: self.callback_controller(msg, 'top'), 10)
+        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/output_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
         # link into  the publishing topic for the servo
         self.servo_pub = self.create_publisher(ServoCommands, '/teensy_hub/servo_pos', 10)
         
         # * geometric parameters
-        self.wheel_radius = self.declare_parameter('wheel_radius', 0.05).value
+        # diameter of wheel is 4.8cm ~ 0.0024m radius
+        self.wheel_radius = self.declare_parameter('wheel_radius', 0.0024).value
         self.circumferance = 2*np.pi*self.wheel_radius
 
         # * variables of this node

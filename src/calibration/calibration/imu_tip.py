@@ -153,12 +153,9 @@ class Calibrate_imu_sensor(Node):
     def save_zaxis(self) -> None:
         # get the mean value of the samples
         v_acc, v_grav = self.evaluate_samples()
-        # the measurment points down, the local coordanites show up so negative vector is the new z-axis
-        v_acc_neg = Vector3(x=-v_acc.x, y=-v_acc.y, z=-v_acc.z)
-        v_grav_neg = Vector3(x=-v_grav.x, y=-v_grav.y, z=-v_grav.z)
         # put those values into the new defined z-axis
-        self.set_axis_vector(v_acc_neg, 'acc', 'z-axis')
-        self.set_axis_vector(v_grav_neg, 'grav', 'z-axis')
+        self.set_axis_vector(v_acc, 'acc', 'z-axis')
+        self.set_axis_vector(v_grav, 'grav', 'z-axis')
         # clear out all data so next sample process can start
         self.samples['acc'].clear()
         self.samples['grav'].clear()
@@ -273,12 +270,8 @@ class Calibrate_imu_sensor(Node):
             yaml.safe_dump(
                 stream = file_handle,
                 data = { # dont forget to add the namespace
-                    'imu_acc': {
-                        self.get_rot_matrix('acc')
-                    },
-                    'imu_grav': {
-                        self.get_rot_matrix('grav')
-                    }},)
+                    'imu_acc': self.get_rot_matrix('acc'),
+                    'imu_grav': self.get_rot_matrix('grav'),},)
         self.get_logger().info('Succesfully created calibration yaml.')
 
 def main():

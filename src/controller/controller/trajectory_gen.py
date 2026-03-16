@@ -7,7 +7,6 @@
 import numpy as np                                                  # for math stuff
 import rclpy                                                        # to be able to use ROS with python
 from rclpy.node import Node                                         # ROS node creation
-from geometry_msgs.msg import Vector3                               # datatype for three dimensional vectors (used in subscribing mag_sensor)
 from std_msgs.msg import Float64MultiArray                          # datatype used for publishing PCC values
 # following libs are all needed to have (dynamic) parameters, makes tuning the controller easier
 from rcl_interfaces.msg import ParameterEvent
@@ -19,11 +18,11 @@ class Trajectore_gen(Node):
     # * function called on creation
     def __init__(self):
         # it insists upon itself
-        super().__init__('gen_coords_imu_acc')
+        super().__init__('trajectory_gen')
 
         # * ROS related
-        # this will publish (x, y, z, theta) of the tip
-        self.trajectory_publisher = self.create_publisher(Float64MultiArray, '/pc/trajectory_coords', 10)
+        # this will publish (delta_x1, delta_y1, delta_x2, delta_y2), full configuration of the robot
+        self.trajectory_publisher = self.create_publisher(Float64MultiArray, '/pc/controller/trajectory', 10)
         # frequency of the updates
         hz = 60
         # timer dictating how often publishing topic gets pushed
@@ -31,50 +30,45 @@ class Trajectore_gen(Node):
         # save the starting time
         self.starting_time = self.publishing_timer.clock.now().nanoseconds
         # this node gets launched with a parameter deciding which trajectory gets followed
-        self.trajectory_name = self.declare_parameter('Name of the Trajecoty', 'circle_xy', ParameterDescriptor = 'String value telling the controller/trajectory_gen Node which trajectory to generate.')
+        self.trajectory_name = self.declare_parameter('Name of the Trajecoty', 'circle_xy', ParameterDescriptor(description = 'String value telling the controller/trajectory_gen Node which trajectory to generate.') ).value
         
         # * Parameter for trajectory generation
         # time in seconds for a completed trajectory
         self.period_T = 10
 
     # * callback of the timer
-    def publishing_timer_callback(self):
+    def publishing_timer_callback(self) -> None:
         # get time that has been 
         t = ( self.publishing_timer.clock.now().nanoseconds - self.starting_time ) * 1e-9
         # get the target coordinates
-        x, y, z, theta = self.function_generation(t, self.trajectory_name)
+        delta_x1, delta_y1, delta_x2, delta_y2 = self.function_generation(t, self.trajectory_name)
         # publish the trajectory
-        self.publish_trajectory(x, y, z, theta)
-        pass
+        self.fire_away(delta_x1, delta_y1, delta_x2, delta_y2 )
 
     # * function generator selected by parameter
+    # it returns generalized coordinates for bottom and top segment
     def function_generation(self, t: int, trajectory_name: str) -> tuple[float, float, float, float]:
-        # create variable space
-        x, y, z, theta = 0.0, 0.0, 0.0, 0.0
         if trajectory_name == 'circle_xy':
             # degrees around the z axis, moving in a circle
             phi = self.wrap_angle( 2 * np.pi * t/self.period_T )
-            # radius in m
-            radius = 0.2
-            # planar circular motion
-            x = radius * np.cos(phi)
-            y = radius * np.sin(phi)
-            # z is predfined
-            z = 0.2
-            # degrees from the z axis, predefined
-            theta = 10
-        return x, y, z, theta
+            # defines amplitude of the circle on segment 1
+            theta = np.deg2rad(10)
+            delta_x1 = theta*np.cos(phi)
+            delta_x2 = delta_x1
+            delta_y1 = theta*np.sin(phi)
+            delta_y2 = delta_y1
+            return delta_x1, delta_y1, delta_x2, delta_y2
     
     # * function to keep angles in the interval [0, 2*pi)
     def wrap_angle(self, angle = float) -> float:
-        return float( angle % (2 * np.pi) )
+        return float( angle % (2 * np.pi) )   
     
-    # * function to publish
-    def publish_trajectory(self, x:float, y:float, z: float, theta: float) -> None:
-        # create a message with fitting type
+    # * function that will publish the generated values
+    def fire_away(self, delta_x1: float, delta_y1: float, delta_x2: float, delta_y2: float) -> None:
+        # prepare a message
         msg = Float64MultiArray()
-        # populate with relevant data
-        msg.data = [x, y, z, theta]
+        # populate it
+        msg.data = [ delta_x1, delta_y1, delta_x2, delta_y2 ]
         # fire it off
         self.trajectory_publisher.publish(msg)
 

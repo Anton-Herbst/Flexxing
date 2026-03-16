@@ -154,12 +154,9 @@ class CalibrateimuSensor(Node):
         for key in range(1,5):
             # get the mean value of the samples
             v_acc, v_grav = self.evaluate_samples(key)
-            # those vectors point the wrong direction since gravity vector shows down
-            v_acc_neg = Vector3(x=-v_acc.x, y=-v_acc.y, z=-v_acc.z)
-            v_grav_neg = Vector3(x=-v_grav.x, y=-v_grav.y, z=-v_grav.z)
             # put those values into the new defined z-axis
-            self.set_axis_vector(v_acc_neg, 'acc', key, 'z-axis')
-            self.set_axis_vector(v_grav_neg, 'grav', key, 'z-axis')
+            self.set_axis_vector(v_acc, 'acc', key, 'z-axis')
+            self.set_axis_vector(v_grav, 'grav', key, 'z-axis')
             # clear out all data so next sample process can start
             self.samples['acc'][key].clear()
             self.samples['grav'][key].clear()

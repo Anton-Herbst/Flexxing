@@ -28,7 +28,6 @@ class Gen_coords_imu_acc(Node):
         self.theta_global = { i: 0.0 for i in range(1,5) }
         # middled results
         self.phi_global_middled = { 'bot': 0.0, 'top': 0.0 }
-        self.theta_global_middled = { 'bot': 0.0, 'top': 0.0 }
 
         # * ROS related
         # subscribe to the transformed vector topic for each sensor
@@ -53,13 +52,11 @@ class Gen_coords_imu_acc(Node):
         # middle the global angles of the 1st and 2nd as well as the 3rd and 4th sensor to get more stable results for the local angles
         self.phi_global_middled['top'] = (self.phi_global[1] + self.phi_global[2]) / 2
         self.phi_global_middled['bot'] = (self.phi_global[3] + self.phi_global[4]) / 2
-        self.theta_global_middled['top'] = (self.theta_global[1] + self.theta_global[2]) / 2
-        self.theta_global_middled['bot'] = (self.theta_global[3] + self.theta_global[4]) / 2
 
     # * function determing plane in which the robot is bent
     def get_global_bendingplane_angle(self, vec: Vector3) -> float:
         # plane is described by rotation around z
-        phi = np.arctan2(vec.y, vec.x)
+        phi = np.arctan2(vec.y, vec.x) % (2 * np.pi)
         # transform back to python float and return it
         return phi.item()
     
@@ -92,10 +89,10 @@ class Gen_coords_imu_acc(Node):
         theta_local = { 'bot': 0.0, 'top': 0.0 }
         # the first sensor is the reference so its local angle is the same as its global angle
         phi_local['bot'] = self.phi_global_middled['bot']
-        theta_local['bot'] = self.theta_global_middled['bot']
+        theta_local['bot'] = self.theta_global[3]
         # local angles are calculated by substracting the previous sensors global angle from the current sensors global angle
-        phi_local['top'] = self.phi_global_middled['top'] - self.phi_global_middled['bot']
-        theta_local['top'] = self.theta_global_middled['top'] - self.theta_global_middled['bot']
+        phi_local['top'] = (self.phi_global_middled['top'] - self.phi_global_middled['bot']) % (2 * np.pi)
+        theta_local['top'] = self.theta_global[4]
         # return the local angles as dicts
         return phi_local, theta_local
     
