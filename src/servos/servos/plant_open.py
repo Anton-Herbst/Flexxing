@@ -3,7 +3,7 @@
 """
 * This script takes the controllers output and applies it to the motors. Definition of a plant.
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⠀⠀
-ITS A PLANT ⠀⠀⣠⡶⠛⠉⠉⢹⡆⠀
+ITS A PLANT ⠀⠀⣠⡶⠛⠉⠉⢹⡆⠀ FOR OPEN LOOP CONTROL
 ⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⢰⡏⢀⡴⠀⠀⣾⠁⠀
 ⠰⣟⠋⠉⠙⠛⢶⣄⠀⠀⠀⢸⣷⠟⠁⣀⡼⠋⠀⠀
 ⠀⢻⡄⠀⠰⢦⣄⣹⡆⠀⠀⣼⠿⠛⠛⠉⠀⠀⠀⠀
@@ -32,8 +32,8 @@ class Plant(Node):
 
         # * ROS related
         # subscribe to controllers output (publised topics from /controller/PI_controller.py)
-        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/controller/output_top', lambda msg: self.callback_controller(msg, 'top'), 10)
-        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/output_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
+        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_top', lambda msg: self.callback_controller(msg, 'top'), 10)
+        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
         # link into  the publishing topic for the servo
         self.servo_pub = self.create_publisher(ServoCommands, '/teensy_hub/servo_pos', 10)
         
@@ -51,9 +51,9 @@ class Plant(Node):
     # * callback function of the controller
     def callback_controller(self, msg: Float64MultiArray, segment: str) -> None:
         # read the incoming control output (k_p * error + k_i * integral)
-        delta_length = np.asarray(msg.data)
+        target_length = np.asarray(msg.data)
         # apply the control output directly to the current length
-        self.current_length[segment] += delta_length
+        self.current_length[segment] = target_length
         # now control servos
         self.activate_servos()
 

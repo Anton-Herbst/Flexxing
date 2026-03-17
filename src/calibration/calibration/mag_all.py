@@ -121,7 +121,7 @@ class CalibrateMagneticSensors(Node):
             self.sampling = True
             # some visual feedback
             self.get_logger().info('Started collecting data again.', once = True)
-        elif delta_t < 3*(self.drive+self.wait) + 2*self.sampling_time:
+        elif delta_t > 2*(self.drive+self.wait+self.sampling_time):
             # turn off sampling
             self.sampling = False
             # print out some information
@@ -233,9 +233,9 @@ class CalibrateMagneticSensors(Node):
 
     # * function to get rotational matrix
     def get_rot_matrix(self, key: int) ->  list:
-        return [[self.axis[key]['x-axis']['x'], self.axis[key]['y-axis']['x'], self.axis[key]['z-axis']['x']],
-                [self.axis[key]['x-axis']['y'], self.axis[key]['y-axis']['y'], self.axis[key]['z-axis']['y']],
-                [self.axis[key]['x-axis']['z'], self.axis[key]['y-axis']['z'], self.axis[key]['z-axis']['z']]]
+        return [[self.axis[key]['x-axis']['x'], self.axis[key]['x-axis']['y'], self.axis[key]['x-axis']['z']],
+                [self.axis[key]['y-axis']['x'], self.axis[key]['y-axis']['y'], self.axis[key]['y-axis']['z']],
+                [self.axis[key]['z-axis']['x'], self.axis[key]['z-axis']['y'], self.axis[key]['z-axis']['z']]]
 
     # * function to write results in yaml file
     # calibration data needs to survive rebuilds so its stored in  a local dir ~/.ros/...
@@ -271,8 +271,8 @@ def main():
     mynode = CalibrateMagneticSensors()
     while mynode.done is not True:
         rclpy.spin_once(mynode)
-    rclpy.shutdown()
     mynode.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
