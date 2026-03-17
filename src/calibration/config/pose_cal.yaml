@@ -1,9 +1,13 @@
 # Wildcard node name so that all nodes can use this
 /**:
   ros__parameters:
-    # upright position to get neutral values
+    # upright position to get neutral values, in microseconds
     upright: [1500, 1500, 1500, 1500, 1500, 1500,
             1500, 1500, 1500, 1500, 1500, 1500]
-    # slight positive (rule of thumb) rotation around the x-axis
+    # slight positive (rule of thumb) rotation around the x-axis. in microseconds
     rotated: [1500, 1500, 1500, 1878, 1500, 1180,
             1500, 1500, 1500, 1500, 1500, 1500]
+    # magnetic field angles for Hamburg, dependent on date and coordinates. in degrees
+    inclination_deg: 68.583
+    # representing the angle between east and the robots x-axis (following the ENU norm)
+    robot_angle_deg: 45

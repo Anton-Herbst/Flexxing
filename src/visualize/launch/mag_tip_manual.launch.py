@@ -24,8 +24,8 @@ def generate_launch_description():
         ),
         Node(
             package='visualize',
-            executable='visualize_mag_tip',     # this node visualizes the endeffector vector
-            name='visualize_mag_tip',           
+            executable='mag_tip',     # this node visualizes the endeffector vector
+            name='mag_tip',           
             output='screen'
         ),
     ])

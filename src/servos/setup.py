@@ -27,6 +27,7 @@ setup(
             'numbers = servos.numbers:main',
             'static = servos.static:main',
             'plant = servos.plant:main',
+            'plant_open = servos.plant_open:main',
         ],
     },
 )

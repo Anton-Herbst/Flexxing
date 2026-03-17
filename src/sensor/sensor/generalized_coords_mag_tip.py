@@ -45,8 +45,7 @@ class Gen_coords_mag_tip(Node):
 
     # * function calculating angular offset to the rooms z-axis
     def get_vertical_angle(self, transformed: Vector3) -> float:
-        planar_axis = np.sqrt(transformed.x ** 2 + transformed.y ** 2)
-        theta = np.arctan2(planar_axis, transformed.z)
+        theta = np.arccos(transformed.z)
         return theta.item()
 
     # * function to get the generalized coordinates

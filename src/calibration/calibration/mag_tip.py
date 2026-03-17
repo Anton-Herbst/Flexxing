@@ -59,13 +59,17 @@ class CalibrateMagneticSensor(Node):
             callback            = self.planner_callback,)
         # mark down the starting point of the timer
         self.start_time = self.planner.clock.now().nanoseconds
+
         # * Parameter from pose_cal.yaml
         # read in the given params from the YAML file
         self.declare_parameters(
             namespace='',
             parameters=[ 
                 ('upright', Parameter.Type.INTEGER_ARRAY, ParameterDescriptor(description='Servo values for an upright pose along the z-axis.')),
-                ('rotated', Parameter.Type.INTEGER_ARRAY, ParameterDescriptor(description='Servo values for a slight rotation around the x-axis.')),])
+                ('rotated', Parameter.Type.INTEGER_ARRAY, ParameterDescriptor(description='Servo values for a slight rotation around the x-axis.')),
+                ('inclination_deg', Parameter.Type.DOUBLE, ParameterDescriptor(description='Divertion from geo-nord, rotation around y or x-axis')),
+                ('robot_angle_deg', Parameter.Type.DOUBLE, ParameterDescriptor(description='Angle between the x-axis and magnetic north.'))])
+        
         # * Parameter for this node
         # how long to wait until the robot is stationary (no swinging) in seconds
         self.wait = 3
@@ -134,7 +138,7 @@ class CalibrateMagneticSensor(Node):
             # print it out
             self.get_logger().info('Matrix:\n' + pprint.pformat(matrix))
             # calls function to handle saving to yaml
-            self.write_down_axis()
+            self.write_down_axis(matrix)
             # my job here is done
             self.done = True
     
@@ -142,8 +146,12 @@ class CalibrateMagneticSensor(Node):
     def save_zaxis(self) -> None:
         # get the mean value of the samples
         v = self.evaluate_samples()
+        # adjust for the geographical position
+        adjusted = self.get_geomagnetic_matrix() @ np.asarray([v.x, v.y, v.z])
+        # prepare a Vector to be defined as the new z-axis
+        v_z = Vector3(x=adjusted[0].item(), y = adjusted[1].item(), z = adjusted[2].item())
         # put those values into the new defined z-axis
-        self.set_axis_vector(v, 'z-axis')
+        self.set_axis_vector(v_z, 'z-axis')
         # clear out all data so next sample process can start
         self.samples.clear()
 
@@ -160,9 +168,14 @@ class CalibrateMagneticSensor(Node):
 
     # * function to save new xaxis
     def save_xaxis(self) -> None:
+        # grab the previously defined z-axis
         v1 = self.get_axis_vector('z-axis')
-        # get the mean value
-        v2 = self.evaluate_samples()
+        # get the mean value of the samples
+        v = self.evaluate_samples()
+        # adjust for the geographical position
+        adjusted = self.get_geomagnetic_matrix() @ np.asarray([v.x, v.y, v.z])
+        # prepare a Vector to be defined as the new z-axis
+        v2 = Vector3(x=adjusted[0].item(), y = adjusted[1].item(), z = adjusted[2].item())
         # calculate the normal vector of the plane spanned by this new sampled axis and the z-axis
         v1x2  = self.cross_product(v1, v2)
         # this will be our newly defined y-axis
@@ -221,10 +234,29 @@ class CalibrateMagneticSensor(Node):
                 [self.axis['y-axis']['x'], self.axis['y-axis']['y'], self.axis['y-axis']['z']],
                 [self.axis['z-axis']['x'], self.axis['z-axis']['y'], self.axis['z-axis']['z']]]
 
+    # * function to get offset rotational matrix
+    # since unlike the imu the direction of the first vector isnt known it depends on the magnetic field
+    def get_geomagnetic_matrix(self) -> np.ndarray:
+        # this is different for each point on earth, thats why its a parameter loaded from pose_cal.yaml
+        inc = np.deg2rad(self.get_parameter('inclination_deg').value)
+        eta = np.deg2rad(self.get_parameter('robot_angle_deg').value)
+        # earths field points mostly up, this is expressed by rotation with the inclination when pointing north (so pointing to yaxis means inclintation is rotation around the x-axis (east))
+        R_inc = np.array([
+            [1,            0,            0],
+            [0,  np.cos(inc),  np.sin(inc)],
+            [0, -np.sin(inc),  np.cos(inc)],])
+        # before the inclination is applied the robots coordinate system must be adjusted so that x points east (y north and z up)
+        R_eta = np.array([
+            [np.cos(eta), -np.sin(eta), 0],
+            [np.sin(eta),  np.cos(eta), 0],
+            [0,                      0, 1],])
+        # every measurement is affected by this
+        return ( R_inc @ R_eta ).T
+
     # * function to write results in yaml file
     # calibration data needs to survive rebuilds so its stored in  a local dir ~/.ros/...
     # this enables reloading calibration from a prior build (less annoying)    
-    def write_down_axis(self) -> None:
+    def write_down_axis(self, matrix: list[list[float]]) -> None:
         # path to the needed config file (expanduser since python cant handle ~)
         local_dir = os.path.expanduser('~/.ros/calibration')
         local_config_file = os.path.join(local_dir, 'mag_cal_tip.yaml')
@@ -233,7 +265,7 @@ class CalibrateMagneticSensor(Node):
         # if theres no file
         if not os.path.exists(local_config_file):
             # find the default yaml path
-            pkg_share_path = get_package_share_directory('sensor')
+            pkg_share_path = get_package_share_directory('calibration')
             # copy the default yaml file into the desired location 
             shutil.copyfile(
                 src = os.path.join(pkg_share_path, 'config', 'mag_cal_tip.yaml'),
@@ -244,7 +276,7 @@ class CalibrateMagneticSensor(Node):
             yaml.safe_dump(
                 stream = file_handle,
                 data = { # dont forget to add the namespace
-                    'magnetometer_calibration_tip': self.get_rot_matrix()},)
+                    'magnetometer_calibration_tip': matrix},)
         self.get_logger().info('Succesfully created calibration yaml.')
 
 def main():

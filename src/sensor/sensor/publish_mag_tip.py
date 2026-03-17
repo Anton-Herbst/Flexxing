@@ -45,8 +45,7 @@ class Publisher_mag_tip(Node):
 
     # * callback function of sensor
     # whenever new data arrives do some math and publish the results straightaway
-    def callback_mag(self, msg: Vector3) -> None:
-        self.transform(msg)
+    def callback_mag(self, msg: Vector3) -> None: self.transform(msg)
 
     # * function tasked with transformation
     # going from the sensors defined system to the local robots system
