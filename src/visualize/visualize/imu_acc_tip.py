@@ -2,16 +2,14 @@
 
 """
 * This file is to see if the transformation and the following calculations are realistic.
-* It will simply read bending and display the sensor readings as a robots pose.
+* It will read in the position of the endeffector directly from the kinematics package and just display it.
 """
 
 import rclpy                                                        # to be able to use ROS with python
 from rclpy.node import Node                                         # ROS node creation
 from geometry_msgs.msg import Vector3                               # datatype for three dimensional vector
-from std_msgs.msg import Float64MultiArray                          # datatype to read custom bending topic
 import matplotlib.pyplot as plt                                     # for visuals
 import threading                                                    # so plt and ROS can work together
-import numpy as np                                                  # useful for math stuff
 
 class Visualizer_imu_acc_tip(Node):
 
@@ -22,12 +20,8 @@ class Visualizer_imu_acc_tip(Node):
         super().__init__('visualize_imu_acc_tip')
         
         # * ROS related
-        # create a subscriber to get the bending out of the nodes sensor/gen_.._imu_acc_tip released topic
-        self.subscription_tip  =  self.create_subscription(
-            msg_type    = Float64MultiArray, 
-            topic       = '/pc/gen_coords_imu_acc_tip',
-            callback    = self.callback_tip, 
-            qos_profile = 10)
+        # create a subscriber to get the endeffectors position from kinematics/G2X_imu_acc_tip
+        self.subscription_tip  =  self.create_subscription( Vector3, '/pos/endeffector', self.callback_tip, 10 )
         # * Node parameters
         # robots length from bottom to tip (since we only use one sensor rn)
         self.length = 0.24 
@@ -61,30 +55,9 @@ class Visualizer_imu_acc_tip(Node):
         self.axis.text(0, 0, self.length, "Z", color='k', fontsize=16)
 
     # * callback on receiving bending information
-    def callback_tip(self, msg: Float64MultiArray) -> None: 
-        # change the domain (lagrange to cartesion, with PCC thats forwards kinematics)
-        endeffector = self.forward_kinematics(msg.data)
-        # redraw the figure
-        self.redraw(endeffector)
-    
-    # * function tasked to go from lagrangian coords to cartesian
-    def forward_kinematics(self, data: list[float]) -> Vector3:
-        # first extract the incoming messages data delta_x and delta_y
-        [delta_x, delta_y, delta] = data
-        # watch out for the singularity (no bending done)
-        if delta < 1e-3:
-            return Vector3(x=0.0, y=0.0, z=self.length)
-        # prefactor for the vector (here singularity appears)
-        factor = self.length / (delta ** 2)
-        # prepare a vector
-        position = Vector3()
-        # fill it according to forward kinematics
-        position.x = factor * (1 - np.cos(delta)) * delta_x
-        position.y = factor * (1 - np.cos(delta)) * delta_y
-        position.z = factor * np.sin(delta) * delta
-        # return it
-        return position
-
+    # redraw the figure with the new pose
+    def callback_tip(self, msg: Vector3) -> None: self.redraw(msg)
+        
     # * function tasked to display new pose
     def redraw(self, new_vec: Vector3) -> None:
         # first delete the old quiver

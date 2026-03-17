@@ -8,31 +8,30 @@
 import rclpy                                                        # to be able to use ROS with python
 from rclpy.node import Node                                         # ROS node creation
 from geometry_msgs.msg import Vector3                               # datatype for three dimensional vector
-from std_msgs.msg import Float64MultiArray                          # datatype to read custom bending topic
 import matplotlib.pyplot as plt                                     # for visuals
 import threading                                                    # so plt and ROS can work together
-import numpy as np                                                  # useful for math stuff
 
-class Visualizer_imu_acc_tip(Node):
+class Visualizer_mag_tip(Node):
 
     # * function called on creation
     def __init__(self):
-
         # "it insists upon itself"
-        super().__init__('visualize_imu_acc_tip')
-        
+        super().__init__('visualize_mag_tip')
+
         # * ROS related
-        # create a subscriber to get the endeffectors position from kinematics/G2X_imu_acc_tip
-        self.subscription_tip  =  self.create_subscription( Vector3, '/pos/endeffector', self.callback_tip, 10 )
+        # create a subscriber to get the endeffectors position from kinematics/G2X_mag_tip
+        self.subscription_tip = self.create_subscription(Vector3, '/pos/endeffector_mag', self.callback_tip, 10)
+
         # * Node parameters
-        # robots length from bottom to tip (since we only use one sensor rn)
-        self.length = 0.24 
+        # robots length from bottom to tip
+        self.length = 0.24
+
         # * Visual related
         # interactive mode on
-        plt.ion()  
+        plt.ion()
         plt.style.use('_mpl-gallery')
-        # create a window 
-        self.fig = plt.figure(figsize = (8,8), num=f"Direction of the tip, using imu linear acceleration data")
+        # create a window
+        self.fig = plt.figure(figsize=(8,8), num=f"Direction of the tip, using magnetic sensor data")
         # add an 3d plot in it
         self.axis = self.fig.add_subplot(projection='3d')
         self.axis.view_init(elev=30, azim=20)
@@ -56,16 +55,17 @@ class Visualizer_imu_acc_tip(Node):
         self.axis.quiver(0, 0, 0, 0, 0, self.length, color='k', arrow_length_ratio=0.1)
         self.axis.text(0, 0, self.length, "Z", color='k', fontsize=16)
 
-    # * callback on receiving bending information
+    # * callback on receiving position information
     # redraw the figure with the new pose
-    def callback_tip(self, msg: Vector3) -> None: self.redraw(msg)
-        
+    def callback_tip(self, msg: Vector3) -> None:
+        self.redraw(msg)
+
     # * function tasked to display new pose
     def redraw(self, new_vec: Vector3) -> None:
         # first delete the old quiver
         self.vector.remove()
         # then make a new one
-        self.vector = self.axis.quiver(0,0,0, new_vec.x, new_vec.y, new_vec.z, color='r', arrow_length_ratio=0.1)
+        self.vector = self.axis.quiver(0, 0, 0, new_vec.x, new_vec.y, new_vec.z, color='r', arrow_length_ratio=0.1)
         # after all quivers have been created redraw the figure
         self.fig.canvas.draw()
         # dont let it freeze up
@@ -73,8 +73,8 @@ class Visualizer_imu_acc_tip(Node):
 
 def main():
     rclpy.init()
-    mynode = Visualizer_imu_acc_tip()
-    # spin the created note in a background tab 
+    mynode = Visualizer_mag_tip()
+    # spin the created node in a background thread
     spin_thread = threading.Thread(target=rclpy.spin, args=(mynode,), daemon=True)
     spin_thread.start()
     # so that matplotlib can be in the foreground

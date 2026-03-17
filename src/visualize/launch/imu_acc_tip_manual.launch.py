@@ -1,6 +1,5 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import ExecuteProcess
 
 def generate_launch_description():
 
@@ -18,9 +17,15 @@ def generate_launch_description():
             output='screen'
         ),
         Node(
+            package='kinematics',
+            executable='G2X_imu_acc_tip',       # this node takes the bending and calculates the position of the tip
+            name='G2X_imu_acc_tip',             # using forward kinematics (only one segment since only one sensor was used)
+            output='screen'
+        ),
+        Node(
             package='visualize',
-            executable='visualize_imu_acc_tip',     # this node takes the bending to visualize the direction of the tip
-            name='visualize_imu_acc_tip',
+            executable='imu_acc_tip',     # this node visualizes the endeffector vector
+            name='imu_acc_tip',           
             output='screen'
         ),
     ])

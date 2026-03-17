@@ -28,8 +28,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'visualize_imu_acc_tip = visualize.visualize_imu_acc_tip:main',
-            'visualize_imu_acc_tip_2 = visualize.visualize_imu_acc_tip_2:main',
+            'imu_acc_tip = visualize.imu_acc_tip:main',
+            'mag_tip = visualize.mag_tip:main',
         ],
     },
 )
