@@ -11,6 +11,9 @@ Second the robot tilts around the x-axis. The changed magnetic vector together w
 span a plane. From this plane the normal vector is the calibrated x-axis.
 
 Lastly the cross product of the calibrated x and z axis will be declared as the calibrated y-axis.
+TODO list
+!- confirm it works with visuals
+!- check the signs of the geomagnetic functions
 """
 
 import numpy as np                                                  # useful for mathematics
@@ -138,7 +141,7 @@ class CalibrateMagneticSensor(Node):
             # print it out
             self.get_logger().info('Matrix:\n' + pprint.pformat(matrix))
             # calls function to handle saving to yaml
-            self.write_down_axis(matrix)
+            self.write_down_axis()
             # my job here is done
             self.done = True
     
@@ -243,12 +246,12 @@ class CalibrateMagneticSensor(Node):
         # earths field points mostly up, this is expressed by rotation with the inclination when pointing north (so pointing to yaxis means inclintation is rotation around the x-axis (east))
         R_inc = np.array([
             [1,            0,            0],
-            [0,  np.cos(inc),  np.sin(inc)],
-            [0, -np.sin(inc),  np.cos(inc)],])
+            [0,  np.cos(inc), -np.sin(inc)],
+            [0,  np.sin(inc),  np.cos(inc)],])
         # before the inclination is applied the robots coordinate system must be adjusted so that x points east (y north and z up)
         R_eta = np.array([
-            [np.cos(eta), -np.sin(eta), 0],
-            [np.sin(eta),  np.cos(eta), 0],
+            [np.cos(eta), np.sin(eta),   0],
+            [-np.sin(eta),  np.cos(eta), 0],
             [0,                      0, 1],])
         # every measurement is affected by this
         return ( R_inc @ R_eta ).T
@@ -256,7 +259,7 @@ class CalibrateMagneticSensor(Node):
     # * function to write results in yaml file
     # calibration data needs to survive rebuilds so its stored in  a local dir ~/.ros/...
     # this enables reloading calibration from a prior build (less annoying)    
-    def write_down_axis(self, matrix: list[list[float]]) -> None:
+    def write_down_axis(self) -> None:
         # path to the needed config file (expanduser since python cant handle ~)
         local_dir = os.path.expanduser('~/.ros/calibration')
         local_config_file = os.path.join(local_dir, 'mag_cal_tip.yaml')
@@ -276,7 +279,7 @@ class CalibrateMagneticSensor(Node):
             yaml.safe_dump(
                 stream = file_handle,
                 data = { # dont forget to add the namespace
-                    'magnetometer_calibration_tip': matrix},)
+                    'magnetometer_calibration_tip': self.get_rot_matrix()},)
         self.get_logger().info('Succesfully created calibration yaml.')
 
 def main():

@@ -47,13 +47,17 @@ class Gen_coords_imu_acc(Node):
         self.phi_global[sensor] = self.get_global_bendingplane_angle(msg)
         self.theta_global[sensor] = self.get_global_vertical_angle(msg)
         # middle the global angles of the 1st and 2nd as well as the 3rd and 4th sensor to get more stable results for the local angles
-        self.phi_global_middled['top'] = (self.phi_global[1] + self.phi_global[2]) / 2
-        self.phi_global_middled['bot'] = (self.phi_global[3] + self.phi_global[4]) / 2
+        self.phi_global_middled['top'] = self.circular_mean(
+        [self.phi_global[1], self.phi_global[2]]
+        )
+        self.phi_global_middled['bot'] = self.circular_mean(
+            [self.phi_global[3], self.phi_global[4]]
+        )
 
     # * function determing plane in which the robot is bent
     def get_global_bendingplane_angle(self, vec: Vector3) -> float:
         # plane is described by rotation around z
-        phi = np.arctan2(vec.y, vec.x) % (2 * np.pi)
+        phi = np.arctan2(vec.y, vec.x)
         # transform back to python float and return it
         return phi.item()
     
@@ -88,8 +92,11 @@ class Gen_coords_imu_acc(Node):
         phi_local['bot'] = self.phi_global_middled['bot']
         theta_local['bot'] = self.theta_global[3]
         # local angles are calculated by substracting the previous sensors global angle from the current sensors global angle
-        phi_local['top'] = (self.phi_global_middled['top'] - self.phi_global_middled['bot']) % (2 * np.pi)
-        theta_local['top'] = self.theta_global[4]
+        phi_local['top'] = self.angle_diff(
+            self.phi_global_middled['top'],
+            self.phi_global_middled['bot']
+        )
+        theta_local['top'] = self.theta_global[1] - self.theta_global[3]
         # return the local angles as dicts
         return phi_local, theta_local
     
@@ -100,6 +107,13 @@ class Gen_coords_imu_acc(Node):
         delta_y = theta * np.sin(phi)
         return delta_x, delta_y, theta
     
+    # * helpful functions to not break circle [0, 2pi) bounderies with any operations
+    def angle_diff(self, a:float, b:float) -> float: return (a - b + np.pi) % (2*np.pi) - np.pi
+    def circular_mean(self, angles:list[float]) -> float:
+        s = np.mean(np.sin(angles))
+        c = np.mean(np.cos(angles))
+        return np.arctan2(s, c)
+
 def main():
     rclpy.init()
     mynode = Gen_coords_imu_acc()

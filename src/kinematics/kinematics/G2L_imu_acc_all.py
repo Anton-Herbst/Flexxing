@@ -32,9 +32,9 @@ class Inverse_PCC_G2L_all(Node):
         # the length of the segment (since we only look at the upper point)
         self.segment_length = self.declare_parameter('L_segment', 0.12).value
         # distance to the middle arc
-        self.d = self.declare_parameter('d', 0.01).value
+        self.d = self.declare_parameter('d', 0.018).value
         # topper rotation
-        self.yaw_offset = np.deg2rad(self.declare_parameter('yaw_offset_top', np.deg2rad(60)).value)
+        self.yaw_offset = np.deg2rad(-60)
 
     # * callback on receiving new info
     def gen_coords_imu_acc(self, msg: Float64MultiArray, segment: str) -> None:

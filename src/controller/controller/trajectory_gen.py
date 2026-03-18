@@ -8,9 +8,7 @@ import numpy as np                                                  # for math s
 import rclpy                                                        # to be able to use ROS with python
 from rclpy.node import Node                                         # ROS node creation
 from std_msgs.msg import Float64MultiArray                          # datatype used for publishing PCC values
-# following libs are all needed to have (dynamic) parameters, makes tuning the controller easier
-from rcl_interfaces.msg import ParameterEvent
-from rclpy.parameter_event_handler import ParameterEventHandler
+# following libs are all needed to have parameters, makes tuning the controller easier
 from rcl_interfaces.msg import ParameterDescriptor  
 
 class Trajectore_gen(Node):
@@ -53,7 +51,7 @@ class Trajectore_gen(Node):
             # degrees around the z axis, moving in a circle
             phi = self.wrap_angle( 2 * np.pi * t/self.period_T )
             # defines amplitude of the circle on segment 1
-            theta = np.deg2rad(20)
+            theta = np.deg2rad(10)
             delta_x1 = theta*np.cos(phi)
             delta_x2 = delta_x1
             delta_y1 = theta*np.sin(phi)

@@ -38,7 +38,9 @@ class CalibrateMagneticSensors(Node):
             namespace='',
             parameters=[ 
                 ('upright', Parameter.Type.INTEGER_ARRAY, ParameterDescriptor(description='Servo values for an upright pose along the z-axis.')),
-                ('rotated', Parameter.Type.INTEGER_ARRAY, ParameterDescriptor(description='Servo values for a slight rotation around the x-axis.')),])
+                ('rotated', Parameter.Type.INTEGER_ARRAY, ParameterDescriptor(description='Servo values for a slight rotation around the x-axis.')),
+                ('inclination_deg', Parameter.Type.DOUBLE, ParameterDescriptor(description='Inclination of earths magnetic field')),
+                ('robot_angle_deg',  Parameter.Type.DOUBLE, ParameterDescriptor(description='Angle from East to robot X-axis')),])
         # * Parameter from this node
         # how often should the timer be called in one second
         self.hz             = 60
@@ -168,7 +170,11 @@ class CalibrateMagneticSensors(Node):
             # grab the vector of the previous defined z-axis
             v1 = self.get_axis_vector(key, 'z-axis')
             # calculate mean vectors from samples
-            v2 = self.evaluate_samples(key)
+            v = self.evaluate_samples(key)
+            # adjust for the geographical position
+            adjusted = self.get_geomagnetic_matrix() @ np.asarray([v.x, v.y, v.z])
+            # prepare a Vector to be defined as the new z-axis
+            v2 = Vector3(x=adjusted[0].item(), y = adjusted[1].item(), z = adjusted[2].item())
             # calculate the normal vector of the plane spanned by this new sampled axis and the z-axis
             v1x2  = self.cross_product(v1, v2)
             # save this new vector as the new x-axis since the sensors got rotated around it
@@ -195,8 +201,12 @@ class CalibrateMagneticSensors(Node):
         for key in range(1, self.number+1):
             # calculate mean vectors from samples 
             v = self.evaluate_samples(key)
+            # apply geo correction
+            adjusted = self.get_geomagnetic_matrix() @ np.asarray([v.x, v.y, v.z])
+            # prepare a Vector to be defined as the new z-axis
+            v_z = Vector3(x=adjusted[0].item(), y = adjusted[1].item(), z = adjusted[2].item())
             # save this vector as the new zaxis
-            self.set_axis_vector(v, key, 'z-axis')
+            self.set_axis_vector(v_z, key, 'z-axis')
             # empty the samples list after all data has been proccessed
             self.samples[key].clear()
     
@@ -237,6 +247,25 @@ class CalibrateMagneticSensors(Node):
                 [self.axis[key]['y-axis']['x'], self.axis[key]['y-axis']['y'], self.axis[key]['y-axis']['z']],
                 [self.axis[key]['z-axis']['x'], self.axis[key]['z-axis']['y'], self.axis[key]['z-axis']['z']]]
 
+    # * function to get offset rotational matrix
+    # since unlike the imu the direction of the first vector isnt known it depends on the magnetic field
+    def get_geomagnetic_matrix(self) -> np.ndarray:
+        # this is different for each point on earth, thats why its a parameter loaded from pose_cal.yaml
+        inc = np.deg2rad(self.get_parameter('inclination_deg').value)
+        eta = np.deg2rad(self.get_parameter('robot_angle_deg').value)
+        # earths field points mostly up, this is expressed by rotation with the inclination when pointing north (so pointing to yaxis means inclintation is rotation around the x-axis (east))
+        R_inc = np.array([
+            [1,            0,            0],
+            [0,  np.cos(inc), -np.sin(inc)],
+            [0,  np.sin(inc),  np.cos(inc)],])
+        # before the inclination is applied the robots coordinate system must be adjusted so that x points east (y north and z up)
+        R_eta = np.array([
+            [np.cos(eta),   np.sin(eta), 0],
+            [-np.sin(eta),  np.cos(eta), 0],
+            [0,                       0, 1],])
+        # every measurement is affected by this
+        return ( R_inc @ R_eta ).T
+    
     # * function to write results in yaml file
     # calibration data needs to survive rebuilds so its stored in  a local dir ~/.ros/...
     # this enables reloading calibration from a prior build (less annoying)    

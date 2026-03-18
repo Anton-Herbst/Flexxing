@@ -19,7 +19,7 @@ def generate_launch_description():
         Node(   # this node will publish the real tendon lengths from sensed coordinates
             package='kinematics',
             executable = 'G2L_imu_acc_all',
-            name='trajectory_tendon_lengths',
+            name='real_tendon_lengths',
             output='screen',
         ),
         Node(   # this node will publishe generalized coordinates as a target

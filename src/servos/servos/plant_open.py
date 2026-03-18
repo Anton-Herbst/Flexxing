@@ -32,14 +32,15 @@ class Plant(Node):
 
         # * ROS related
         # subscribe to controllers output (publised topics from /controller/PI_controller.py)
-        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_top', lambda msg: self.callback_controller(msg, 'top'), 10)
-        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
+        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_target_top', lambda msg: self.callback_controller(msg, 'top'), 10)
+        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_target_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
         # link into  the publishing topic for the servo
         self.servo_pub = self.create_publisher(ServoCommands, '/teensy_hub/servo_pos', 10)
         
         # * geometric parameters
         # diameter of wheel is 4.8cm ~ 0.024m radius
         self.wheel_radius = self.declare_parameter('wheel_radius', 0.024).value
+        self.segment_length = self.declare_parameter('L_segment', 0.12).value
         self.circumferance = 2*np.pi*self.wheel_radius
 
         # * variables of this node
@@ -76,8 +77,10 @@ class Plant(Node):
 
     # * function to convert lengths to micros
     def length_to_micros(self, length: float) -> int:
-        # get how much has to be spooled off the roll
-        rotations = length / self.circumferance
+        # get how much has to be spooled off the roll (difference to neutral position)
+        delta = length - self.segment_length
+        # convert how many rotations that equals
+        rotations = delta / self.circumferance
         # convert that into degrees
         degrees = rotations * 360
         # map the calculated degrees over the range -50° to 50° responding to 900us to 2100us

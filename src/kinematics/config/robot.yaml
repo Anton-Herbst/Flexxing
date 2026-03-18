@@ -2,7 +2,7 @@
 # wildcard so any node can read this
 /**:
   ros__parameters:
-    'd': 0.1
+    'd': 0.18
     'L_segment': 0.12
     'L_total': 0.24
     'yaw_offset_top': 60 # in degrees

@@ -18,12 +18,12 @@ class Publish_Tendon_Error(Node):
         super().__init__('publish_tendon_error')
 
         # * ROS related
-        # subscribe to incoming tendon lengths for each segment published by kinematics/G2L..., depending on sensor measurements
+        # subscribe to incoming tendon lengths for each segment published by kinematics/G2L_imu_acc_all, depending on sensor measurements
         self.subscription_real_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_bot', lambda msg: self.tendon_lengths_real(msg, 'bot'), 10 )
         self.subscription_real_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_top', lambda msg: self.tendon_lengths_real(msg, 'top'), 10 )
-        # subscribe to the desired tendon lengths published by kinematics/X2L, depending on the trajectory generation in controller package
-        self.subscription_desired_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_desired_bot', lambda msg: self.tendon_lengths_desired(msg, 'bot'), 10 )
-        self.subscription_desired_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_desired_top', lambda msg: self.tendon_lengths_desired(msg, 'top'), 10 )
+        # subscribe to the desired tendon lengths published by kinematics/G2L_trajectory, depending on generation in controller package
+        self.subscription_desired_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_target_bot', lambda msg: self.tendon_lengths_desired(msg, 'bot'), 10 )
+        self.subscription_desired_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_target_top', lambda msg: self.tendon_lengths_desired(msg, 'top'), 10 )
         # publisher giving out the error for all tendons for each segment
         self.publisher_error_bot = self.create_publisher(Float64MultiArray, '/pc/tendon_error_bot', 10)
         self.publisher_error_top = self.create_publisher(Float64MultiArray, '/pc/tendon_error_top', 10)
@@ -63,6 +63,7 @@ class Publish_Tendon_Error(Node):
         # publish the messages
         self.publisher_error_bot.publish(msg_bot)
         self.publisher_error_top.publish(msg_top)
+        self.get_logger().info(f' bot: {tendon_error_bot}, top: {tendon_error_top}')
 
 def main():
     rclpy.init()

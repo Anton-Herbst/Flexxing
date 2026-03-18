@@ -34,9 +34,9 @@ class Controller(Node):
 
         # * Parameter
         # for sanitys sake the gains of the controller are adjustable with rqt, allowing for quick testing
-        self.declare_parameter('p_factor', 0.1, ParameterDescriptor(description = 'P Value for the controller.'))
-        self.declare_parameter('i_factor', 0.01, ParameterDescriptor(description = 'I Value for the controller.'))
-        self.declare_parameter('windup_limit', 0.4, ParameterDescriptor(description = 'Limit for the I gain.'))
+        self.declare_parameter('p_factor', 0.001, ParameterDescriptor(description = 'P Value for the controller.'))
+        self.declare_parameter('i_factor', 0.0001, ParameterDescriptor(description = 'I Value for the controller.'))
+        self.declare_parameter('windup_limit', 0.001, ParameterDescriptor(description = 'Limit for the I gain.'))
         # create an object monitoring for parameter changes
         self.param_handler = ParameterEventHandler(self)
         # give that monitoring object a callback function
@@ -70,7 +70,7 @@ class Controller(Node):
         # update the integral
         self.update_integral_of_error(error, segment)
         # make an array to apply the formula a step later
-        integral = np.asarray(self.integral[segment][0], self.integral[segment][1], self.integral[segment][2])
+        integral = np.asarray( self.integral[segment] )
         # PI-Controller formula (directly as a vector)
         output = k_p * tendon_length_errors + k_i * integral
         # return the output

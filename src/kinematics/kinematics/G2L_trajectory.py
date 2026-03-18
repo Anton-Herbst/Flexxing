@@ -21,8 +21,8 @@ class Inverse_PCC_G2L_all(Node):
         # subscribe to incoming generalized coordinates produced by controller/trajectory to get all generealiezd coordinates
         self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/trajectory', self.callback_trajectory, 10 )
         # publisher giving out lengths for all tendons for each segment
-        self.publisher_top = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_top', 10 )
-        self.publisher_bot = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_bot', 10 )
+        self.publisher_top = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_target_top', 10 )
+        self.publisher_bot = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_target_bot', 10 )
         # create a publisher dict to select where to publish the results 
         self.publisher_select = { 'bot': self.publisher_bot, 'top': self.publisher_top }
 
@@ -32,7 +32,7 @@ class Inverse_PCC_G2L_all(Node):
         # distance to the middle arc
         self.d = self.declare_parameter('d', 0.01).value
         # topper rotation
-        self.yaw_offset = np.deg2rad(self.declare_parameter('yaw_offset_top', np.deg2rad(60)).value)
+        self.yaw_offset = np.deg2rad(-60)
 
     # * callback on receiving new info
     def callback_trajectory(self, msg: Float64MultiArray) -> None:
@@ -71,6 +71,8 @@ class Inverse_PCC_G2L_all(Node):
         msg.data = [l_a, l_b, l_c]
         # publish the message
         self.publisher_select[segment].publish(msg)
+
+
 def main():
     rclpy.init()
     mynode = Inverse_PCC_G2L_all()

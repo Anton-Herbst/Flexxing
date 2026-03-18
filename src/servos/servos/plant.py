@@ -41,10 +41,11 @@ class Plant(Node):
         # diameter of wheel is 4.8cm ~ 0.024m radius
         self.wheel_radius = self.declare_parameter('wheel_radius', 0.024).value
         self.circumferance = 2*np.pi*self.wheel_radius
-
+        self.segment_length = self.declare_parameter('L_segment', 0.12).value
+        
         # * variables of this node
-        # keep track of the tuned lengths
-        self.current_length = {'top': np.zeros(3), 'bot': np.zeros(3)}
+        # keep track of the tuned lengths, start at neutral lengths
+        self.current_length = {'top': np.full(3, self.segment_length), 'bot': np.full(3, self.segment_length)}
         # order of the servo commands, important for publishing them later
         self.order = ['top1','bot1','top2','bot2','top3','bot3']
     
@@ -76,8 +77,10 @@ class Plant(Node):
 
     # * function to convert lengths to micros
     def length_to_micros(self, length: float) -> int:
+        # difference to neutral position
+        delta = length - self.segment_length
         # get how much has to be spooled off the roll
-        rotations = length / self.circumferance
+        rotations = delta / self.circumferance
         # convert that into degrees
         degrees = rotations * 360
         # map the calculated degrees over the range -50° to 50° responding to 900us to 2100us

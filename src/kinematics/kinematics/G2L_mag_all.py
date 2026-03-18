@@ -34,7 +34,7 @@ class Inverse_PCC_G2L_mag_all(Node):
         # distance to the middle arc
         self.d = self.declare_parameter('d', 0.01).value
         # topper rotation
-        self.yaw_offset = np.deg2rad(self.declare_parameter('yaw_offset_top', np.deg2rad(60)).value)
+        self.yaw_offset = np.deg2rad(-60)
 
     # * callback on receiving new info
     def callback_gen_coords(self, msg: Float64MultiArray, segment: str) -> None:
