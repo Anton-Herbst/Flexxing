@@ -25,6 +25,7 @@ def generate_launch_description():
         Node(   # this node will publishe generalized coordinates as a target
             package='controller',
             executable='trajectory_gen',
+            parameters=[{ 'trajectory_name': 'circle_xy' }],
             name='trajectory_gen',
             output='screen',
         ),

@@ -10,7 +10,7 @@ import rclpy                                                        # to be able
 from rclpy.node import Node                                         # ROS node creation
 from std_msgs.msg import Float64MultiArray                          # datatype used for multiple floats
 
-class Inverse_PCC_G2L_all(Node):
+class Inverse_PCC_G2L_traj(Node):
     
     # * function called on creation
     def __init__(self):
@@ -30,9 +30,9 @@ class Inverse_PCC_G2L_all(Node):
         # the length of the segment (since we only look at the upper point)
         self.segment_length = self.declare_parameter('L_segment', 0.12).value
         # distance to the middle arc
-        self.d = self.declare_parameter('d', 0.01).value
+        self.d = self.declare_parameter('d', 0.018).value
         # topper rotation
-        self.yaw_offset = np.deg2rad(-60)
+        self.yaw_offset = np.deg2rad(300)
 
     # * callback on receiving new info
     def callback_trajectory(self, msg: Float64MultiArray) -> None:
@@ -75,7 +75,7 @@ class Inverse_PCC_G2L_all(Node):
 
 def main():
     rclpy.init()
-    mynode = Inverse_PCC_G2L_all()
+    mynode = Inverse_PCC_G2L_traj()
     rclpy.spin(mynode)
     mynode.destroy_node()
     rclpy.shutdown()

@@ -9,6 +9,7 @@ import numpy as np                                                  # for math s
 import rclpy                                                        # to be able to use ROS with python
 from rclpy.node import Node                                         # ROS node creation
 from std_msgs.msg import Float64MultiArray                          # datatype used for multiple floats
+from std_msgs.msg import Float64
 
 class Publish_Tendon_Error(Node):
     
@@ -27,11 +28,14 @@ class Publish_Tendon_Error(Node):
         # publisher giving out the error for all tendons for each segment
         self.publisher_error_bot = self.create_publisher(Float64MultiArray, '/pc/tendon_error_bot', 10)
         self.publisher_error_top = self.create_publisher(Float64MultiArray, '/pc/tendon_error_top', 10)
+        # for later visuals its good to see the absolute error, as well as the average error
+        self.publisher_absolute_error = self.create_publisher(Float64, '/pos/absolute_error', 10)
+        self.publisher_average_error = self.create_publisher(Float64, '/pps/average_error', 10)
 
         # * Geometric Parameters
         self.segment_length = self.declare_parameter('L_segment', 0.12).value
 
-        # * Parameters
+        # * Parameters of this node
         # placeholder for all realistic and desired tendon lengths, to be able to calculate the error when both are available
         self.lengths_real = { 'bot': [self.segment_length] * 3, 'top': [self.segment_length] *3 }
         self.lengths_desired = { 'bot': [self.segment_length] * 3, 'top': [self.segment_length] *3 }
@@ -63,7 +67,14 @@ class Publish_Tendon_Error(Node):
         # publish the messages
         self.publisher_error_bot.publish(msg_bot)
         self.publisher_error_top.publish(msg_top)
-        self.get_logger().info(f' bot: {tendon_error_bot}, top: {tendon_error_top}')
+        # absolute error
+        tendon_error_all = np.concatenate( (tendon_error_bot, tendon_error_top) )
+        msg_abs = Float64()
+        msg_abs.data = np.linalg.norm(tendon_error_all)
+        self.publisher_absolute_error.publish(msg_abs)
+        msg_avg = Float64()
+        msg_avg.data = np.mean(tendon_error_all)
+        self.publisher_average_error.publish(msg_avg)
 
 def main():
     rclpy.init()

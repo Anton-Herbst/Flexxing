@@ -18,6 +18,9 @@ class Trajectore_gen(Node):
         # it insists upon itself
         super().__init__('trajectory_gen')
         
+        # * geometric paramter
+        self.d = self.declare_parameter('d', 0.018).value
+
         # * ROS related
         # this will publish (delta_x1, delta_y1, delta_x2, delta_y2), full configuration of the robot
         self.trajectory_publisher = self.create_publisher(Float64MultiArray, '/pc/controller/trajectory', 10)
@@ -28,8 +31,8 @@ class Trajectore_gen(Node):
         # timer dictating how often publishing topic gets pushed
         self.publishing_timer = self.create_timer( 1/self.hz, self.publishing_timer_callback)
         # this node gets launched with a parameter deciding which trajectory gets followed
-        self.trajectory_name = self.declare_parameter('Name of the Trajecoty', 'circle_xy', ParameterDescriptor(description = 'String value telling the controller/trajectory_gen Node which trajectory to generate.') ).value
-        
+        self.trajectory_name = self.declare_parameter('trajectory_name', 'circle_xy', ParameterDescriptor(description = 'String value telling the controller/trajectory_gen Node which trajectory to generate.') ).value
+        self.get_logger().info(f'Selected trajectory is {self.trajectory_name}')
         # * Parameter for trajectory generation
         # time in seconds for a completed trajectory
         self.period_T = 10
@@ -51,12 +54,36 @@ class Trajectore_gen(Node):
             # degrees around the z axis, moving in a circle
             phi = self.wrap_angle( 2 * np.pi * t/self.period_T )
             # defines amplitude of the circle on segment 1
-            theta = np.deg2rad(10)
-            delta_x1 = theta*np.cos(phi)
+            theta = np.deg2rad(10) /self.d
+            delta_x1 = theta*self.d*np.cos(phi)
+            delta_y1 = theta*self.d*np.sin(phi)
             delta_x2 = delta_x1
-            delta_y1 = theta*np.sin(phi)
             delta_y2 = delta_y1
             return delta_x1, delta_y1, delta_x2, delta_y2
+        elif trajectory_name == 'point_x':
+            phi = np.deg2rad(0)
+            theta = np.deg2rad(30) /self.d
+            delta_x1 = 0
+            delta_y1 = 0
+            delta_x2 = theta*self.d*np.cos(phi)
+            delta_y2 = theta*self.d*np.sin(phi)
+            return delta_x1, delta_y1, delta_x2, delta_y2
+        elif trajectory_name == 'point_xy':
+            phi = np.deg2rad(45)
+            theta = np.deg2rad(30)/self.d
+            delta_x1 = 0
+            delta_y1 = 0
+            delta_x2 = theta*self.d*np.cos(phi)
+            delta_y2 = theta*self.d*np.sin(phi)
+            return delta_x1, delta_y1, delta_x2, delta_y2   
+        elif trajectory_name == 'point_y':
+            phi = np.deg2rad(90)
+            theta = np.deg2rad(30)/self.d
+            delta_x1 = 0
+            delta_y1 = 0
+            delta_x2 = theta*self.d*np.cos(phi)
+            delta_y2 = theta*self.d*np.sin(phi)
+            return delta_x1, delta_y1, delta_x2, delta_y2     
         else:
             return 0.0, 0.0, 0.0, 0.0
         

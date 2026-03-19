@@ -19,6 +19,9 @@ class Gen_coords_imu_acc(Node):
         # it insists upon itself
         super().__init__('gen_coords_imu_acc')
 
+        # * Geometric Parameter
+        self.d = self.declare_parameter('d', 0.018).value
+
         # * Parameter for this node
         # keep a dict of the last incoming (global) angles from the sensors so their difference (local angles) can later be calculated
         self.phi_global = { i: 0.0 for i in range(1,5) }
@@ -57,7 +60,7 @@ class Gen_coords_imu_acc(Node):
     # * function determing plane in which the robot is bent
     def get_global_bendingplane_angle(self, vec: Vector3) -> float:
         # plane is described by rotation around z
-        phi = np.arctan2(vec.y, vec.x)
+        phi = np.arctan2(vec.y, vec.x) % (2*np.pi)
         # transform back to python float and return it
         return phi.item()
     
@@ -103,16 +106,16 @@ class Gen_coords_imu_acc(Node):
     # * function calculating the generalized coordinates from the local angles
     def get_generalized_coordinates(self, theta:float, phi: float) -> tuple[float, float, float]:
         # this only works with local angles, which we calculate beforehand
-        delta_x = theta * np.cos(phi)
-        delta_y = theta * np.sin(phi)
+        delta_x = theta * self.d * np.cos(phi)
+        delta_y = theta * self.d * np.sin(phi)
         return delta_x, delta_y, theta
     
     # * helpful functions to not break circle [0, 2pi) bounderies with any operations
-    def angle_diff(self, a:float, b:float) -> float: return (a - b + np.pi) % (2*np.pi) - np.pi
+    def angle_diff(self, a, b) -> float: return (a - b) % (2*np.pi)
     def circular_mean(self, angles:list[float]) -> float:
-        s = np.mean(np.sin(angles))
-        c = np.mean(np.cos(angles))
-        return np.arctan2(s, c)
+        sin = np.mean(np.sin(angles))
+        cos = np.mean(np.cos(angles))
+        return np.arctan2(sin, cos) % (2*np.pi)
 
 def main():
     rclpy.init()

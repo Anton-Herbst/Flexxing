@@ -42,7 +42,7 @@ class Plant(Node):
         self.wheel_radius = self.declare_parameter('wheel_radius', 0.024).value
         self.circumferance = 2*np.pi*self.wheel_radius
         self.segment_length = self.declare_parameter('L_segment', 0.12).value
-        
+        self.max_delta = 50/360 * 2 * np.pi * self.wheel_radius
         # * variables of this node
         # keep track of the tuned lengths, start at neutral lengths
         self.current_length = {'top': np.full(3, self.segment_length), 'bot': np.full(3, self.segment_length)}
@@ -52,9 +52,9 @@ class Plant(Node):
     # * callback function of the controller
     def callback_controller(self, msg: Float64MultiArray, segment: str) -> None:
         # read the incoming control output (k_p * error + k_i * integral)
-        delta_length = np.asarray(msg.data)
+        target_length = np.asarray(msg.data)
         # apply the control output directly to the current length
-        self.current_length[segment] += delta_length
+        self.current_length[segment] = target_length
         # now control servos
         self.activate_servos()
 
