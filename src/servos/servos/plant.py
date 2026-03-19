@@ -29,11 +29,24 @@ class Plant(Node):
     def __init__(self):
         # it insists upon itself
         super().__init__('plant')
+        # * Parameter deciding wether to use open or closed loop control
+        # control mode: 'open_loop' or 'closed_loop'
+        self.control_mode    = self.declare_parameter('control_mode', 'open_loop').value
+
+        # * ROS related
+        # select topics based on control mode
+        if self.control_mode == 'closed_loop':
+            subscription_topic_top = '/pc/controller/output_top'
+            subscription_topic_bot = '/pc/controller/output_bot'
+        else:  # open_loop
+            subscription_topic_top = '/pc/tendon_lengths_target_top'
+            subscription_topic_bot = '/pc/tendon_lengths_target_bot'
+        self.get_logger().info(f'Plant running in {self.control_mode} mode.')
 
         # * ROS related
         # subscribe to controllers output (publised topics from /controller/PI_controller.py)
-        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/controller/output_top', lambda msg: self.callback_controller(msg, 'top'), 10)
-        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/output_bot', lambda msg: self.callback_controller(msg, 'bot'),10)
+        self.subscription_top = self.create_subscription(Float64MultiArray, subscription_topic_top, lambda msg: self.callback_controller(msg, 'top'), 10)
+        self.subscription_bot = self.create_subscription(Float64MultiArray, subscription_topic_bot, lambda msg: self.callback_controller(msg, 'bot'),10)
         # link into  the publishing topic for the servo
         self.servo_pub = self.create_publisher(ServoCommands, '/teensy_hub/servo_pos', 10)
         
@@ -43,6 +56,7 @@ class Plant(Node):
         self.circumferance = 2*np.pi*self.wheel_radius
         self.segment_length = self.declare_parameter('L_segment', 0.12).value
         self.max_delta = 50/360 * 2 * np.pi * self.wheel_radius
+        
         # * variables of this node
         # keep track of the tuned lengths, start at neutral lengths
         self.current_length = {'top': np.full(3, self.segment_length), 'bot': np.full(3, self.segment_length)}

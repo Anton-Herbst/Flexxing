@@ -1,9 +1,17 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+
 
 def generate_launch_description():
 
     return LaunchDescription([
+        DeclareLaunchArgument( # this defines the trajectory which will be followed
+            'traj',
+            default_value='circle_xy',
+            description='Trajectory name'
+        ),
         Node(   # this node transforms sensor values to be analyzed
             package='sensor',
             executable='publish_imu_acc_all',
@@ -20,6 +28,7 @@ def generate_launch_description():
             package='controller',
             executable='trajectory_gen',
             name='trajectory_gen',
+            parameters=[{ 'trajectory_name':  LaunchConfiguration('traj') }],
             output='screen',
         ),
         Node(   # this node will publish target tendon lengths from the trajectory
@@ -30,8 +39,15 @@ def generate_launch_description():
         ),
         Node(   # this node will act based on target lengths
             package='servos',
-            executable='plant_open',
+            executable='plant',
+            parameters = [{'control_mode': 'open_loop'}],
             name='plant',
+            output='screen'
+        ),
+        Node(   # this node is only called to track the error
+            package='controller',
+            executable='PI_controller',
+            name='PI_controller',
             output='screen'
         ),
         Node(   # this node will show where the trajectory is

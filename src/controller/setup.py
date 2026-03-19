@@ -29,7 +29,6 @@ setup(
     entry_points={
         'console_scripts': [
             'PI_controller = controller.PI_controller:main',
-            'publish_tendon_error = controller.calculate_tendon_error:main',
             'trajectory_gen = controller.trajectory_gen:main',
         ],
     },
