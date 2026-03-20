@@ -8,7 +8,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument( # this defines the trajectory which will be followed
             'traj',
-            default_value='circle_xy',
+            default_value='circle',
             description='Trajectory name'
         ),
         Node(   # this node transforms sensor values to be analyzed
@@ -42,12 +42,6 @@ def generate_launch_description():
             name='trajectory_tendon_lengths',
             output='screen',
         ),
-        Node(   # this node will publish the difference between target and real tendon lenghts
-            package='controller',
-            executable='publish_tendon_error',
-            name='publish_tendon_error',
-            output='screen'
-        ),
         Node(   # this node will give an output based on the error
             package='controller',
             executable='PI_controller',
@@ -59,6 +53,24 @@ def generate_launch_description():
             executable='plant',
             name='plant',
             parameters = [{'control_mode': 'closed_loop'}],
+            output='screen'
+        ),
+        Node(   # this node will show where the trajectory is in space
+            package = 'kinematics',
+            executable = 'G2X_trajectory',
+            name = 'trajectory_position',
+            output = 'screen',
+        ),
+        Node(   # this node will show where the endeffector really is according to the imu sensor
+            package='kinematics',
+            executable = 'G2X_imu_acc_all',
+            name = 'endeffector_position',
+            output = 'screen',       
+        ),
+        Node(   # this will publish how far off the tip is in the cartesian system
+            package='visualize',
+            executable='cartesian_error',
+            name = 'cartesian_error',
             output='screen'
         ),
     ])

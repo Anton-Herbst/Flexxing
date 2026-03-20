@@ -38,9 +38,9 @@ class Controller(Node):
         self.segment_length = self.declare_parameter('L_segment',    0.12,   ParameterDescriptor(description='Neutral segment length.')).value
 
         # * Parameters for controller
-        self.declare_parameter('p_factor',     0.1,  ParameterDescriptor(description='P Value for the controller.'))
+        self.declare_parameter('p_factor',     0.5,  ParameterDescriptor(description='P Value for the controller.'))
         self.declare_parameter('i_factor',     0.1,    ParameterDescriptor(description='I Value for the controller.'))
-        self.declare_parameter('windup_limit', 0.5, ParameterDescriptor(description='Limit for the I gain.'))
+        self.declare_parameter('windup_limit', 0.02, ParameterDescriptor(description='Limit for the I gain.'))
         self.param_handler = ParameterEventHandler(self)
         self.param_event_callback_handle = self.param_handler.add_parameter_event_callback(self.callback_param_handler)
 
@@ -53,6 +53,11 @@ class Controller(Node):
         # timing, also needed for integrals
         init_time = self.get_clock().now().nanoseconds
         self.last_measurement_time = {'bot': init_time, 'top': init_time}
+        # defines how many last values are applied to the low pass filter
+        keepinmind = 10
+        self.buffer_error = {segment: {i: np.zeros(keepinmind) for i in range(3)} for segment in ('bot', 'top')}
+        self.buffer_average_error = np.zeros(keepinmind)
+        self.buffer_absolute_error = np.zeros(keepinmind)
 
     # * parameter change callback
     def callback_param_handler(self, event: ParameterEvent) -> None:
@@ -70,7 +75,8 @@ class Controller(Node):
     # * main control function
     def compute_and_publish(self, segment: str) -> None:
         # calculate error
-        error = self.lengths_desired[segment] - self.lengths_real[segment]
+        reading = self.lengths_desired[segment] - self.lengths_real[segment]
+        error = self.low_pass_filter_error(reading, segment)
         # get gains
         k_p = self.get_parameter('p_factor').value
         k_i = self.get_parameter('i_factor').value
@@ -103,16 +109,38 @@ class Controller(Node):
         self.last_measurement_time[segment] = current_time
         return delta_t
 
-    # * diagnostics
+    # * errors further helping with visualizing
     def publish_diagnostics(self) -> None:
         error_bot = self.lengths_desired['bot'] - self.lengths_real['bot']
         error_top = self.lengths_desired['top'] - self.lengths_real['top']
         error_all = np.concatenate((error_bot, error_top))
+        self.publish_errors(error_all)
+
+    # * filter so controller is more reliable
+    def low_pass_filter_error(self, input:np.ndarray, segment:str) -> np.ndarray:
+        # prepare a list to be returned
+        filtered = np.zeros(3)
+        for i in range(3):
+            # take the relevant buffer and shift all values to the left
+            self.buffer_error[segment][i] = np.roll(self.buffer_error[segment][i], -1)
+            # place the newest one to the furthest right
+            self.buffer_error[segment][i][-1] = input[i]
+            # get the mean as the filters output
+            filtered[i] = np.mean(self.buffer_error[segment][i])
+        return filtered
+    
+    def publish_errors(self, error_all: np.ndarray) -> None:
         msg_abs = Float64()
-        msg_abs.data = float(np.linalg.norm(error_all))
+        absolute_error = float(np.linalg.norm(error_all))
+        self.buffer_absolute_error = np.roll(self.buffer_absolute_error, -1)
+        self.buffer_absolute_error[-1] = absolute_error
+        msg_abs.data = np.mean(self.buffer_absolute_error)
         self.publisher_absolute_error.publish(msg_abs)
         msg_avg = Float64()
-        msg_avg.data = float(np.mean(np.abs(error_all)))
+        average_error = float(np.mean(np.abs(error_all)))
+        self.buffer_average_error = np.roll(self.buffer_average_error, -1)
+        self.buffer_average_error[-1] = average_error
+        msg_avg.data = np.mean(self.buffer_average_error)
         self.publisher_average_error.publish(msg_avg)
 
 def main():

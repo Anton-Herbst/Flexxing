@@ -98,7 +98,9 @@ class Plant(Node):
         # convert that into degrees
         degrees = rotations * 360
         # map the calculated degrees over the range -50° to 50° responding to 900us to 2100us
-        micros = int( np.interp(degrees, [-50, 50], [900, 2100]) )
+        # since fewer microseconds equal to "giving" more tendon length and higher microseconds equal to "curling in"
+        # the mapping must be reversed for the PI to still work
+        micros = int( np.interp(degrees, [-50, 50], [2100, 900]) )
         # give the result away
         return micros
     

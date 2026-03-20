@@ -22,7 +22,7 @@ class G2X_imu_acc_tip(Node):
         self.publisher_endeffector = self.create_publisher(Vector3, '/pos/trajectory', 10)
 
         # * Parameter
-        self.segment_length = self.declare_parameter('L_total', 0.24).value
+        self.segment_length = self.declare_parameter('L_segment', 0.12).value
 
     # * callback on receiving new generalized coordinates
     def callback_gen_coords(self, msg: Float64MultiArray) -> None:

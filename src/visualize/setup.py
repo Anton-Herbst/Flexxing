@@ -29,7 +29,9 @@ setup(
     entry_points={
         'console_scripts': [
             'imu_acc_tip = visualize.imu_acc_tip:main',
+            'cartesian_error = visualize.cartesian_error:main',
             'mag_tip = visualize.mag_tip:main',
+            'imu_acc_traj = visualize.imu_acc_traj:main',
         ],
     },
 )

@@ -31,7 +31,7 @@ class Forward_PCC_G2X_mag(Node):
             topic       = '/pc/gen_coords_mag_top',
             callback    = lambda msg: self.callback_gen_coords(msg, 'top'),
             qos_profile = 10)
-        self.publisher_endeffector = self.create_publisher(Vector3, '/pos/endeffector_mag', 10)
+        self.publisher_endeffector = self.create_publisher(Vector3, '/pos/endeffector', 10)
 
         # * Parameter
         self.segment_length = self.declare_parameter('L_segment', 0.12).value

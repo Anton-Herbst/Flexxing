@@ -9,7 +9,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument( # this defines the trajectory which will be followed
             'traj',
-            default_value='circle_xy',
+            default_value='circle',
             description='Trajectory name'
         ),
         Node(   # this node transforms sensor values to be analyzed
@@ -23,6 +23,12 @@ def generate_launch_description():
             executable='generalized_coords_imu_acc_all',
             name='generalized_coords_imu_acc_all',
             output='screen',            
+        ),
+        Node(   # this node will publish the real tendon lengths from sensed coordinates
+            package='kinematics',
+            executable = 'G2L_imu_acc_all',
+            name='real_tendon_lengths',
+            output='screen',
         ),
         Node(   # this node will make a target trajectory
             package='controller',
@@ -62,4 +68,10 @@ def generate_launch_description():
             name = 'endeffector_position',
             output = 'screen',       
         ),
+        Node( # this will publish how far off the tip is in the cartesian system
+            package='visualize',
+            executable='cartesian_error',
+            name = 'cartesian_error',
+            output='screen'
+        )
     ])

@@ -24,7 +24,7 @@ class G2X_mag_tip(Node):
         # subscribe to incoming generalized coordinates for the tip from sensor/gen_coords_mag_tip
         self.subscription = self.create_subscription(Float64MultiArray, '/pc/gen_coords_mag_tip', self.callback_gen_coords_tip, 10)
         # publisher giving out current real position according to forward kinematics
-        self.publisher_endeffector = self.create_publisher(Vector3, '/pos/endeffector_mag', 10)
+        self.publisher_endeffector = self.create_publisher(Vector3, '/pos/endeffector', 10)
 
         # * Parameter
         # only one segment means total length of the robot
