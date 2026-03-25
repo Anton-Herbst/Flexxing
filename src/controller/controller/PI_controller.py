@@ -36,9 +36,9 @@ class Controller(Node):
         self.d = self.declare_parameter('d', 0.018).value
 
         # * Parameters for controller
-        self.declare_parameter('p_factor',     0.05,  ParameterDescriptor(description='P Value for the controller.'))
-        self.declare_parameter('i_factor',     0.0,    ParameterDescriptor(description='I Value for the controller.'))
-        self.declare_parameter('windup_limit', 0.01, ParameterDescriptor(description='Limit for the I gain.'))
+        self.declare_parameter('p_factor',     0.4,  ParameterDescriptor(description='P Value for the controller.'))
+        self.declare_parameter('i_factor',     0.01,    ParameterDescriptor(description='I Value for the controller.'))
+        self.declare_parameter('windup_limit', 0.1, ParameterDescriptor(description='Limit for the I gain.'))
         self.param_handler = ParameterEventHandler(self)
         self.param_event_callback_handle = self.param_handler.add_parameter_event_callback(self.callback_param_handler)
 

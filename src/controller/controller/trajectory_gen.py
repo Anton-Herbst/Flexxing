@@ -55,14 +55,14 @@ class Trajectore_gen(Node):
             phi = self.wrap_angle( 2 * np.pi * t/self.period_T )
             # defines amplitude of the circle on segment 1
             theta = np.deg2rad(15)
-            delta_x1 = theta*self.d*np.cos(phi)
-            delta_y1 = theta*self.d*np.sin(phi)
+            delta_x1 = theta*np.cos(phi)
+            delta_y1 = theta*np.sin(phi)
             delta_x2 = delta_x1
             delta_y2 = delta_y1
             return delta_x1, delta_y1, delta_x2, delta_y2
         elif trajectory_name == 'point_x':
             phi = np.deg2rad(0)
-            theta = np.deg2rad(40)
+            theta = np.deg2rad(30)
             delta_x1 = 0
             delta_y1 = 0
             delta_x2 = theta*np.cos(phi)
@@ -77,7 +77,7 @@ class Trajectore_gen(Node):
             delta_y2 = theta*np.sin(phi)
             return delta_x1, delta_y1, delta_x2, delta_y2   
         elif trajectory_name == 'point_y':
-            phi = np.deg2rad(270)
+            phi = np.deg2rad(90)
             theta = np.deg2rad(30)
             delta_x1 = 0
             delta_y1 = 0
@@ -89,7 +89,7 @@ class Trajectore_gen(Node):
             progress = ((self.tick/self.hz) / self.period_T ) % 1
             # triangle amplitude (same idea as circle)
             theta = np.deg2rad(30)
-            A = theta * self.d
+            A = theta
             # define triangle corners as x,y
             v1 = np.array([ A, 0])
             v2 = np.array([-A/2, -np.sqrt(3)/2 * A])

@@ -46,19 +46,28 @@ class G2X_imu_acc_tip(Node):
         # avoid singularity in upright position
         if delta < 1e-6:
             return np.eye(3)
-        # calculate each entry
-        R11 = 1 + delta_x ** 2 / delta ** 2 * (1 - np.cos(delta))
-        R12 = delta_x * delta_y / delta ** 2 * (1 - np.cos(delta))
-        R13 = - delta_x / delta * np.sin(delta)
+
+        c = np.cos(delta)
+        s = np.sin(delta)
+        d2 = delta ** 2
+
+        R11 = 1 + (delta_x ** 2 / d2) * (c - 1)
+        R12 = (delta_x * delta_y / d2) * (c - 1)
+        R13 = (delta_x / delta) * s
+
         R21 = R12
-        R22 = 1 + delta_y ** 2 / delta ** 2 * (1 - np.cos(delta))
-        R23 = - delta_y / delta * np.sin(delta)
-        R31 = - R13
-        R32 = - R23
-        R33 = 1 + (1 - np.cos(delta))
-        return np.array([[R11, R12, R13],
-                         [R21, R22, R23],
-                         [R31, R32, R33]])
+        R22 = 1 + (delta_y ** 2 / d2) * (c - 1)
+        R23 = (delta_y / delta) * s
+
+        R31 = -R13
+        R32 = -R23
+        R33 = c
+
+        return np.array([
+            [R11, R12, R13],
+            [R21, R22, R23],
+            [R31, R32, R33]
+        ])
 
     def get_transformation_vector(self, delta_x: float, delta_y: float) -> Vector3:
         delta = np.sqrt(delta_x ** 2 + delta_y ** 2)
