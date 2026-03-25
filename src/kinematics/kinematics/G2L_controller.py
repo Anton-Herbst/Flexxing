@@ -10,16 +10,16 @@ import rclpy                                                        # to be able
 from rclpy.node import Node                                         # ROS node creation
 from std_msgs.msg import Float64MultiArray                          # datatype used for multiple floats
 
-class Inverse_PCC_G2L_traj(Node):
+class Inverse_PCC_G2L_controller(Node):
     
     # * function called on creation
     def __init__(self):
         # it insists upon itself
-        super().__init__('inverse_PCC_G2L_trajectory')
+        super().__init__('inverse_PCC_G2L_controller')
 
         # * ROS related
-        # subscribe to incoming generalized coordinates produced by controller/trajectory to get all generealiezd coordinates
-        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/trajectory', self.callback_trajectory, 10 )
+        # subscribe to incoming generalized coordinates produced by PO controller to get all generealiezd coordinates
+        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/controller/output', self.callback_trajectory, 10 )
         # publisher giving out lengths for all tendons for each segment
         self.publisher_top = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_target_top', 10 )
         self.publisher_bot = self.create_publisher( Float64MultiArray, '/pc/tendon_lengths_target_bot', 10 )
@@ -31,6 +31,8 @@ class Inverse_PCC_G2L_traj(Node):
         self.segment_length = self.declare_parameter('L_segment', 0.12).value
         # distance to the middle arc
         self.d = self.declare_parameter('d', 0.018).value
+        # topper rotation
+        self.yaw_offset = np.deg2rad(300)
 
     # * callback on receiving new info
     def callback_trajectory(self, msg: Float64MultiArray) -> None:
@@ -75,7 +77,7 @@ class Inverse_PCC_G2L_traj(Node):
 
 def main():
     rclpy.init()
-    mynode = Inverse_PCC_G2L_traj()
+    mynode = Inverse_PCC_G2L_controller()
     rclpy.spin(mynode)
     mynode.destroy_node()
     rclpy.shutdown()

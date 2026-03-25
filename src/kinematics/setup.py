@@ -32,6 +32,8 @@ setup(
             # about trajectory
             'G2L_trajectory = kinematics.G2L_trajectory:main',
             'G2X_trajectory = kinematics.G2X_trajectory:main',
+            # controller
+            'G2L_controller = kinematics.G2L_controller:main'
         ],
     },
 )

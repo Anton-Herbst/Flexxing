@@ -22,12 +22,21 @@ class Gen_coords_imu_acc(Node):
         # * Geometric Parameter
         self.d = self.declare_parameter('d', 0.018).value
 
+        # * Low-pass filter parameter
+        self.filter_window = 5
+
         # * Parameter for this node
         # keep a dict of the last incoming (global) angles from the sensors so their difference (local angles) can later be calculated
         self.phi_global = { i: 0.0 for i in range(1,5) }
         self.theta_global = { i: 0.0 for i in range(1,5) }
         # middled results
         self.phi_global_middled = { 'bot': 0.0, 'top': 0.0 }
+
+        # * Buffer for low-pass filtered generalized coordinates [delta_x, delta_y, theta]
+        self.buffer_gen_coords = {
+            'bot': np.zeros((3, self.filter_window)),
+            'top': np.zeros((3, self.filter_window))
+        }
 
         # * ROS related
         # subscribe to the transformed vector topic for each sensor
@@ -38,8 +47,9 @@ class Gen_coords_imu_acc(Node):
         # create a publisher dict to select where to publish the results
         self.publisher_select = {
             # they will carry an array which consist of the [delta_x, delta_y and their norm delta] for each sensor
-            'bot': self.create_publisher( Float64MultiArray,'/pc/gen_coords_imu_acc_bot', 10),
-            'top': self.create_publisher( Float64MultiArray,'/pc/gen_coords_imu_acc_top', 10),}
+            'bot': self.create_publisher(Float64MultiArray, '/pc/gen_coords_imu_acc_bot', 10),
+            'top': self.create_publisher(Float64MultiArray, '/pc/gen_coords_imu_acc_top', 10),
+        }
         # create a timer to publish the local angles at a fixed rate 
         hz = 20
         self.publishing_timer = self.create_timer(1/hz, self.publish_local_angles) 
@@ -51,7 +61,7 @@ class Gen_coords_imu_acc(Node):
         self.theta_global[sensor] = self.get_global_vertical_angle(msg)
         # middle the global angles of the 1st and 2nd as well as the 3rd and 4th sensor to get more stable results for the local angles
         self.phi_global_middled['top'] = self.circular_mean(
-        [self.phi_global[1], self.phi_global[2]]
+            [self.phi_global[1], self.phi_global[2]]
         )
         self.phi_global_middled['bot'] = self.circular_mean(
             [self.phi_global[3], self.phi_global[4]]
@@ -75,13 +85,22 @@ class Gen_coords_imu_acc(Node):
     # * callback of the timer 
     def publish_local_angles(self):
         # calculate the local angles from the global angles on callback
-        phi_local, theta_local = self.get_local_angles()     
+        phi_local, theta_local = self.get_local_angles()
+
         # publish the local angles for each sensor
         for segment in 'bot', 'top':
             # prepare a message for each sensor
             msg = Float64MultiArray()
-            # fill its data field with the according generalized coordinates derived from local angles  
-            msg.data = list(self.get_generalized_coordinates(theta_local[segment], phi_local[segment]))
+
+            # get generalized coordinates from local angles
+            gen_coords = np.array(self.get_generalized_coordinates(theta_local[segment], phi_local[segment]))
+
+            # apply low-pass filter
+            filtered_gen_coords = self.low_pass_filter_gen_coords(gen_coords, segment)
+
+            # fill its data field with the filtered generalized coordinates
+            msg.data = list(filtered_gen_coords)
+
             # now publish the message containing [delta_x, delta_y and delta] for the segment to the right topic
             self.publisher_select[segment].publish(msg)
             
@@ -104,19 +123,32 @@ class Gen_coords_imu_acc(Node):
         return phi_local, theta_local
     
     # * function calculating the generalized coordinates from the local angles
-    def get_generalized_coordinates(self, theta:float, phi: float) -> tuple[float, float, float]:
+    def get_generalized_coordinates(self, theta: float, phi: float) -> tuple[float, float, float]:
         # this only works with local angles, which we calculate beforehand
-        delta_x = theta * self.d * np.cos(phi)
-        delta_y = theta * self.d * np.sin(phi)
-        return delta_x, delta_y, (theta *self.d)
+        delta_x = theta * np.cos(phi)
+        delta_y = theta * np.sin(phi)
+        return delta_x, delta_y, theta
+
+    # * filter so controller is more reliable
+    def low_pass_filter_gen_coords(self, input: np.ndarray, segment: str) -> np.ndarray:
+        # prepare a list to be returned
+        filtered = np.zeros(3)
+        for i in range(3):
+            # take the relevant buffer and shift all values to the left
+            self.buffer_gen_coords[segment][i] = np.roll(self.buffer_gen_coords[segment][i], -1)
+            # place the newest one to the furthest right
+            self.buffer_gen_coords[segment][i][-1] = input[i]
+            # get the mean as the filters output
+            filtered[i] = np.mean(self.buffer_gen_coords[segment][i])
+        return filtered
     
     # * helpful functions to not break circle [0, 2pi) bounderies with any operations
     def angle_diff(self, a, b) -> float: return (a - b + np.pi) % (2*np.pi) - np.pi
-    def circular_mean(self, angles:list[float]) -> float:
+    def circular_mean(self, angles: list[float]) -> float:
         sin = np.mean(np.sin(angles))
         cos = np.mean(np.cos(angles))
         return np.arctan2(sin, cos) % (2*np.pi)
-
+    
 def main():
     rclpy.init()
     mynode = Gen_coords_imu_acc()

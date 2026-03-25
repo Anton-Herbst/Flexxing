@@ -32,21 +32,13 @@ class Plant(Node):
         # * Parameter deciding wether to use open or closed loop control
         # control mode: 'open_loop' or 'closed_loop'
         self.control_mode    = self.declare_parameter('control_mode', 'open_loop').value
-
-        # * ROS related
-        # select topics based on control mode
-        if self.control_mode == 'closed_loop':
-            subscription_topic_top = '/pc/controller/output_top'
-            subscription_topic_bot = '/pc/controller/output_bot'
-        else:  # open_loop
-            subscription_topic_top = '/pc/tendon_lengths_target_top'
-            subscription_topic_bot = '/pc/tendon_lengths_target_bot'
+        # residual code, however i kept it in for nice visuals.
         self.get_logger().info(f'Plant running in {self.control_mode} mode.')
 
         # * ROS related
         # subscribe to controllers output (publised topics from /controller/PI_controller.py)
-        self.subscription_top = self.create_subscription(Float64MultiArray, subscription_topic_top, lambda msg: self.callback_controller(msg, 'top'), 10)
-        self.subscription_bot = self.create_subscription(Float64MultiArray, subscription_topic_bot, lambda msg: self.callback_controller(msg, 'bot'),10)
+        self.subscription_top = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_target_top', lambda msg: self.callback_tendons(msg, 'top'), 10)
+        self.subscription_bot = self.create_subscription(Float64MultiArray, '/pc/tendon_lengths_target_bot', lambda msg: self.callback_tendons(msg, 'bot'),10)
         # link into  the publishing topic for the servo
         self.servo_pub = self.create_publisher(ServoCommands, '/teensy_hub/servo_pos', 10)
         
@@ -64,7 +56,7 @@ class Plant(Node):
         self.order = ['top1','bot1','top2','bot2','top3','bot3']
     
     # * callback function of the controller
-    def callback_controller(self, msg: Float64MultiArray, segment: str) -> None:
+    def callback_tendons(self, msg: Float64MultiArray, segment: str) -> None:
         # read the incoming control output (k_p * error + k_i * integral)
         target_length = np.asarray(msg.data)
         # apply the control output directly to the current length
@@ -79,12 +71,15 @@ class Plant(Node):
         # prepare the microseconds 
         micros = [1500] * 12
         # enter the saved values from current lengths
-        for idx in range(3):
-            # values in micros[0]=top1, micros[2]=top2, micros[4]=top3
-            micros[idx * 2]     = self.length_to_micros(self.current_length['top'][idx])
-            # values in micros[1]=bot1, micros[3]=bot2, micros[5]=bot3
-            micros[idx * 2 + 1] = self.length_to_micros(self.current_length['bot'][idx])
-        # populate the message
+
+        micros[0] = self.length_to_micros(self.current_length['top'][0])    #top1 motor 
+        micros[2] = self.length_to_micros(self.current_length['top'][1])    #top2 motor
+        micros[4] = self.length_to_micros(self.current_length['top'][2])    #top3 motor
+
+        micros[1] = self.length_to_micros(self.current_length['bot'][0])  #bot1 motor
+        micros[3] = self.length_to_micros(self.current_length['bot'][1])  #bot2 motor
+        micros[5] = self.length_to_micros(self.current_length['bot'][2])  #bot3 motor
+
         msg.servo_micros = micros
         # fire it off
         self.servo_pub.publish(msg)
@@ -100,7 +95,7 @@ class Plant(Node):
         # map the calculated degrees over the range -50° to 50° responding to 900us to 2100us
         # since fewer microseconds equal to "giving" more tendon length and higher microseconds equal to "curling in"
         # the mapping must be reversed for the PI to still work
-        micros = int( np.interp(degrees, [-50, 50], [2000, 1000]) )
+        micros = int( np.interp(degrees, [-50, 50], [900, 2100]) )
         # give the result away
         return micros
     

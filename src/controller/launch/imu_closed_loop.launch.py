@@ -23,32 +23,26 @@ def generate_launch_description():
             name='generalized_coords_imu_acc_all',
             output='screen',            
         ),
-        Node(   # this node will publish the real tendon lengths from sensed coordinates
-            package='kinematics',
-            executable = 'G2L_imu_acc_all',
-            name='real_tendon_lengths',
-            output='screen',
-        ),
-        Node(   # this node will publishe generalized coordinates as a target
+        Node(   # this node will publish generalized coordinates as a target
             package='controller',
             executable='trajectory_gen',
             name='trajectory_gen',
             parameters=[{ 'trajectory_name':  LaunchConfiguration('traj') }],
             output='screen',
         ),
-        Node(   # this node will publish target tendon lengths from the trajectory
-            package='kinematics',
-            executable = 'G2L_trajectory',
-            name='trajectory_tendon_lengths',
-            output='screen',
-        ),
-        Node(   # this node will give an output based on the error
+        Node(   # this node will give an output based on the error between target and real configuration
             package='controller',
             executable='PI_controller',
             name='PI_controller',
             output='screen'
         ),
-        Node(   # this node will act based on the controller output -> motor control
+        Node(
+            package='kinematics',
+            executable='G2L_controller',
+            name='Tendon_Calculator',
+            output = 'screen',
+        ),
+        Node(  # this node will act based on the commanded tendon lengths
             package='servos',
             executable='plant',
             name='plant',

@@ -3,8 +3,8 @@
 """
 * This file is for me to figure out which servo has which number.
 ------------------------------------------------------------------
-0,2,4 - bottom half
-1,3,5 - higher half
+1,3,5 - bottom half
+0,2,4 - higher half
 """
 
 import numpy as np                          # math stuff useful for making the servos do curves
@@ -22,7 +22,7 @@ class Numbering(Node):
         self.number = 1
         self.get_logger().info(f'Wiggling Motor #{self.number}')
         # period of our sinus (in seconds)
-        self.T = 1
+        self.T = 2
         # resolution of the timer/how often servos will be updated during period
         self.res = 1000
         # Amplitude of our sinus (ranged from min 0 to max 15000)

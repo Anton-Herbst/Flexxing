@@ -62,7 +62,7 @@ class Trajectore_gen(Node):
             return delta_x1, delta_y1, delta_x2, delta_y2
         elif trajectory_name == 'point_x':
             phi = np.deg2rad(0)
-            theta = np.deg2rad(40) *self.d
+            theta = np.deg2rad(40)
             delta_x1 = 0
             delta_y1 = 0
             delta_x2 = theta*np.cos(phi)
@@ -73,16 +73,16 @@ class Trajectore_gen(Node):
             theta = np.deg2rad(30)
             delta_x1 = 0
             delta_y1 = 0
-            delta_x2 = theta*self.d*np.cos(phi)
-            delta_y2 = theta*self.d*np.sin(phi)
+            delta_x2 = theta*np.cos(phi)
+            delta_y2 = theta*np.sin(phi)
             return delta_x1, delta_y1, delta_x2, delta_y2   
         elif trajectory_name == 'point_y':
             phi = np.deg2rad(270)
             theta = np.deg2rad(30)
             delta_x1 = 0
             delta_y1 = 0
-            delta_x2 = theta*self.d*np.cos(phi)
-            delta_y2 = theta*self.d*np.sin(phi)
+            delta_x2 = theta*np.cos(phi)
+            delta_y2 = theta*np.sin(phi)
             return delta_x1, delta_y1, delta_x2, delta_y2  
         elif trajectory_name == 'triangle':
             # normalize time that has passed to  to [0, 1)
