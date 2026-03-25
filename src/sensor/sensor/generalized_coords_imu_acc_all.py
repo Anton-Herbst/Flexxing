@@ -108,10 +108,10 @@ class Gen_coords_imu_acc(Node):
         # this only works with local angles, which we calculate beforehand
         delta_x = theta * self.d * np.cos(phi)
         delta_y = theta * self.d * np.sin(phi)
-        return delta_x, delta_y, theta
+        return delta_x, delta_y, (theta *self.d)
     
     # * helpful functions to not break circle [0, 2pi) bounderies with any operations
-    def angle_diff(self, a, b) -> float: return (a - b) % (2*np.pi)
+    def angle_diff(self, a, b) -> float: return (a - b + np.pi) % (2*np.pi) - np.pi
     def circular_mean(self, angles:list[float]) -> float:
         sin = np.mean(np.sin(angles))
         cos = np.mean(np.cos(angles))

@@ -29,11 +29,6 @@ setup(
             'G2L_imu_acc_all = kinematics.G2L_imu_acc_all:main',
             'G2X_imu_acc_tip = kinematics.G2X_imu_acc_tip:main',
             'G2X_imu_acc_all = kinematics.G2X_imu_acc_all:main',
-            # about mag
-            'G2L_mag_tip = kinematics.G2L_mag_tip:main',
-            'G2L_mag_all = kinematics.G2L_mag_all:main',
-            'G2X_mag_tip = kinematics.G2X_mag_tip:main',
-            'G2X_mag_all = kinematics.G2X_mag_all:main',
             # about trajectory
             'G2L_trajectory = kinematics.G2L_trajectory:main',
             'G2X_trajectory = kinematics.G2X_trajectory:main',

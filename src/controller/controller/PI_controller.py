@@ -36,11 +36,13 @@ class Controller(Node):
 
         # * Geometric Parameters
         self.segment_length = self.declare_parameter('L_segment',    0.12,   ParameterDescriptor(description='Neutral segment length.')).value
+        self.d = self.declare_parameter('d', 0.018).value
 
         # * Parameters for controller
-        self.declare_parameter('p_factor',     0.5,  ParameterDescriptor(description='P Value for the controller.'))
-        self.declare_parameter('i_factor',     0.1,    ParameterDescriptor(description='I Value for the controller.'))
-        self.declare_parameter('windup_limit', 0.02, ParameterDescriptor(description='Limit for the I gain.'))
+        self.declare_parameter('p_factor',     1000.0,  ParameterDescriptor(description='P Value for the controller.'))
+        self.declare_parameter('i_factor',     10.0,    ParameterDescriptor(description='I Value for the controller.'))
+        self.declare_parameter('windup_limit', 50.0, ParameterDescriptor(description='Limit for the I gain.'))
+        self.declare_parameter('timer_rate',   100.0,   ParameterDescriptor(description='Control loop rate in Hz.'))
         self.param_handler = ParameterEventHandler(self)
         self.param_event_callback_handle = self.param_handler.add_parameter_event_callback(self.callback_param_handler)
 
@@ -50,30 +52,40 @@ class Controller(Node):
         self.lengths_desired = {'bot': np.full(3, self.segment_length), 'top': np.full(3, self.segment_length)}
         # integral value for each tendon
         self.integral = {'bot': np.zeros(3), 'top': np.zeros(3)}
-        # timing, also needed for integrals
-        init_time = self.get_clock().now().nanoseconds
-        self.last_measurement_time = {'bot': init_time, 'top': init_time}
+        # timing, also needed for integrals — timer drives dt now, so track last tick time
+        self.last_tick_time = self.get_clock().now().nanoseconds
         # defines how many last values are applied to the low pass filter
-        keepinmind = 10
+        keepinmind = 2
         self.buffer_error = {segment: {i: np.zeros(keepinmind) for i in range(3)} for segment in ('bot', 'top')}
         self.buffer_average_error = np.zeros(keepinmind)
         self.buffer_absolute_error = np.zeros(keepinmind)
+
+        # * Timer — decouples control from async subscription callbacks
+        # callbacks only store the latest data; the timer runs the actual PI loop at a fixed rate
+        timer_rate = self.get_parameter('timer_rate').value
+        self.timer = self.create_timer(1.0 / timer_rate, self.timer_callback)
 
     # * parameter change callback
     def callback_param_handler(self, event: ParameterEvent) -> None:
         self.get_logger().info('Changed a parameter for this node.')
 
-    # * callbacks for incoming lengths
+    # * callbacks for incoming lengths — store only, no computation
     def callback_real(self, msg: Float64MultiArray, segment: str) -> None:
         self.lengths_real[segment] = np.asarray(msg.data)
-        self.compute_and_publish(segment)
 
     def callback_desired(self, msg: Float64MultiArray, segment: str) -> None:
         self.lengths_desired[segment] = np.asarray(msg.data)
-        self.compute_and_publish(segment)
+
+    # * timer callback — runs PI loop for both segments at a fixed rate
+    def timer_callback(self) -> None:
+        dt = self.time_since_last_tick()
+        for segment in ('bot', 'top'):
+            self.compute_and_publish(segment, dt)
+        # publish diagnostics once per tick, covering both segments
+        self.publish_diagnostics()
 
     # * main control function
-    def compute_and_publish(self, segment: str) -> None:
+    def compute_and_publish(self, segment: str, dt: float) -> None:
         # calculate error
         reading = self.lengths_desired[segment] - self.lengths_real[segment]
         error = self.low_pass_filter_error(reading, segment)
@@ -81,7 +93,7 @@ class Controller(Node):
         k_p = self.get_parameter('p_factor').value
         k_i = self.get_parameter('i_factor').value
         # update integral
-        self.update_integral_of_error(error, segment)
+        self.update_integral_of_error(error, segment, dt)
         integral = self.integral[segment]
         # PI output is a correction on top of desired — absolute position
         correction = k_p * error + k_i * integral
@@ -90,23 +102,21 @@ class Controller(Node):
         msg = Float64MultiArray()
         msg.data = output.tolist()
         self.publisher_select[segment].publish(msg)
-        # publish diagnostics
-        self.publish_diagnostics()
 
     # * integral update
-    def update_integral_of_error(self, error: np.ndarray, segment: str) -> None:
+    def update_integral_of_error(self, error: np.ndarray, segment: str, dt: float) -> None:
         windup = self.get_parameter('windup_limit').value
-        dt = self.time_since_last_measurement(segment)
-        dt = min(dt, 0.1)  # clamp first dt spike
         self.integral[segment] = np.clip(
             self.integral[segment] + error * dt,
             [-windup]*3, [windup]*3)
 
-    # * timing helper
-    def time_since_last_measurement(self, segment: str) -> float:
+    # * timing helper — measures elapsed time since last timer tick
+    def time_since_last_tick(self) -> float:
         current_time = self.get_clock().now().nanoseconds
-        delta_t = (current_time - self.last_measurement_time[segment]) * 1e-9
-        self.last_measurement_time[segment] = current_time
+        delta_t = (current_time - self.last_tick_time) * 1e-9
+        # clamp to guard against the first tick or unexpected clock jumps
+        delta_t = min(delta_t, 0.1)
+        self.last_tick_time = current_time
         return delta_t
 
     # * errors further helping with visualizing

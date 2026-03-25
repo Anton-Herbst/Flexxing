@@ -34,8 +34,6 @@ setup(
         'console_scripts': [
             'imu_tip = calibration.imu_tip:main',
             'imu_all = calibration.imu_all:main',
-            'mag_tip = calibration.mag_tip:main',
-            'mag_all = calibration.mag_all:main',
         ],
     },
 )
