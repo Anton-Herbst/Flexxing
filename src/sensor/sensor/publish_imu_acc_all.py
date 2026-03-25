@@ -76,9 +76,16 @@ class Publisher_imu_acc_all(Node):
 def main():
     rclpy.init()
     mynode = Publisher_imu_acc_all()
-    rclpy.spin(mynode)
-    mynode.destroy_node()
-    rclpy.shutdown()
-
+    try:
+        rclpy.spin(mynode)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        mynode.destroy_node()
+        try:
+            rclpy.shutdown()
+        except Exception:
+            pass
+        
 if __name__ == '__main__':
     main()

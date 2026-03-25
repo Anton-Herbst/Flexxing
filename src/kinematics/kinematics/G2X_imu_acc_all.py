@@ -98,9 +98,16 @@ class Forward_PCC_G2X(Node):
 def main():
     rclpy.init()
     mynode = Forward_PCC_G2X()
-    rclpy.spin(mynode)
-    mynode.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(mynode)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        mynode.destroy_node()
+        try:
+            rclpy.shutdown()
+        except Exception:
+            pass
 
 if __name__ == '__main__':
     main()
