@@ -35,7 +35,7 @@ class Trajectore_gen(Node):
         self.get_logger().info(f'Selected trajectory is {self.trajectory_name}')
         # * Parameter for trajectory generation
         # time in seconds for a completed trajectory
-        self.period_T = 10
+        self.period_T = 20
 
     # * callback of the timer
     def publishing_timer_callback(self) -> None:
@@ -62,15 +62,15 @@ class Trajectore_gen(Node):
             return delta_x1, delta_y1, delta_x2, delta_y2
         elif trajectory_name == 'point_x':
             phi = np.deg2rad(0)
-            theta = np.deg2rad(30)
-            delta_x1 = 0
-            delta_y1 = 0
-            delta_x2 = theta*np.cos(phi)
-            delta_y2 = theta*np.sin(phi)
+            theta = np.deg2rad(20)
+            delta_x1 = theta*np.cos(phi)
+            delta_y1 = theta*np.sin(phi)
+            delta_x2 = delta_x1
+            delta_y2 = delta_y1
             return delta_x1, delta_y1, delta_x2, delta_y2
         elif trajectory_name == 'point_xy':
             phi = np.deg2rad(45)
-            theta = np.deg2rad(30)
+            theta = np.deg2rad(20)
             delta_x1 = 0
             delta_y1 = 0
             delta_x2 = theta*np.cos(phi)
@@ -78,7 +78,7 @@ class Trajectore_gen(Node):
             return delta_x1, delta_y1, delta_x2, delta_y2   
         elif trajectory_name == 'point_y':
             phi = np.deg2rad(90)
-            theta = np.deg2rad(30)
+            theta = np.deg2rad(20)
             delta_x1 = 0
             delta_y1 = 0
             delta_x2 = theta*np.cos(phi)
@@ -111,7 +111,7 @@ class Trajectore_gen(Node):
                 # picks up at the last place v3 and will close the loop to v1
                 p = (1 - alpha) * v3 + alpha * v1
             # since p is defined as the track between the corners it carriex x and y
-            delta_x1, delta_y1 = p/2
+            delta_x1, delta_y1 = p
             # because the robot has two segments its best to demonstrate the lower half too
             delta_x2, delta_y2 = p
             # this produces a nice triangle

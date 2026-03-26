@@ -58,8 +58,8 @@ class Inverse_PCC_G2L_traj(Node):
         elif segment == 'bot': # -> l1, l2, l3
             # the bottom segment tendons are not rotated
             l_1 = self.segment_length - self.d * delta_x
-            l_2 = self.segment_length + self.d * (delta_x * 1/2 - delta_y * np.sqrt(3)/2)
-            l_3 = self.segment_length + self.d * (delta_x * 1/2 + delta_y * np.sqrt(3)/2)
+            l_2 = self.segment_length + self.d * (delta_x * 1/2 + delta_y * np.sqrt(3)/2)
+            l_3 = self.segment_length + self.d * (delta_x * 1/2 - delta_y * np.sqrt(3)/2)
             return l_1, l_2, l_3
         return l_a, l_b, l_c    
     

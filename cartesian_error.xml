@@ -3,20 +3,20 @@
  <tabbed_widget parent="main_window" name="Main Window">
   <Tab containers="1" tab_name="tab1">
    <Container>
-    <DockSplitter sizes="0.500705;0.499295" count="2" orientation="-">
+    <DockSplitter sizes="0.5;0.5" count="2" orientation="-">
      <DockArea name="...">
-      <plot mode="TimeSeries" flip_x="false" flip_y="false" line_width="1.0">
-       <range left="0.000000" top="0.005000" bottom="0.000000" right="43.111218"/>
-       <limitY max="0.005" min="0"/>
-       <curve color="#1f77b4" name="/pos/cartesian_error/data"/>
+      <plot flip_y="false" flip_x="false" line_width="1.0" mode="TimeSeries">
+       <range bottom="0.007199" left="0.000000" top="0.028257" right="60.002654"/>
+       <limitY/>
+       <curve name="/pos/cartesian_error/data" color="#1f77b4"/>
       </plot>
      </DockArea>
      <DockArea name="...">
-      <plot mode="TimeSeries" flip_x="false" flip_y="false" line_width="1.0">
-       <range left="0.000000" top="0.000500" bottom="0.000000" right="43.111218"/>
-       <limitY max="0.0005" min="0"/>
-       <curve color="#d62728" name="/pc/average_error/data"/>
-       <curve color="#1ac938" name="/pc/absolute_error/data"/>
+      <plot flip_y="false" flip_x="false" line_width="1.0" mode="TimeSeries">
+       <range bottom="0.000000" left="0.000000" top="0.500000" right="60.002654"/>
+       <limitY max="0.5" min="0"/>
+       <curve name="/pc/controller/absolute_error/data" color="#1f77b4"/>
+       <curve name="/pc/controller/average_error/data" color="#d62728"/>
       </plot>
      </DockArea>
     </DockSplitter>
@@ -47,7 +47,7 @@
    <max_array_size value="100"/>
    <boolean_strings_to_number value="true"/>
    <remove_suffix_from_strings value="true"/>
-   <selected_topics value="/pc/absolute_error;/pc/average_error;/pos/cartesian_error"/>
+   <selected_topics value="/pc/controller/absolute_error;/pc/controller/average_error;/pos/cartesian_error;/pos/trajectory;/pos/endeffector"/>
   </plugin>
   <plugin ID="UDP Server"/>
   <plugin ID="WebSocket Server"/>
@@ -63,7 +63,6 @@
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
  <previouslyLoaded_Datafiles/>
- <previouslyLoaded_Streamer name="ROS2 Topic Subscriber"/>
  <!-- - - - - - - - - - - - - - - -->
  <customMathEquations/>
  <snippets/>

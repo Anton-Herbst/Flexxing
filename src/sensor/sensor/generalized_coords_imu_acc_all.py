@@ -23,7 +23,7 @@ class Gen_coords_imu_acc(Node):
         self.d = self.declare_parameter('d', 0.018).value
 
         # * Low-pass filter parameter
-        self.filter_window = 5
+        self.filter_window = 20
 
         # * Parameter for this node
         # keep a dict of the last incoming (global) angles from the sensors so their difference (local angles) can later be calculated
@@ -114,10 +114,11 @@ class Gen_coords_imu_acc(Node):
         phi_local['bot'] = self.phi_global_middled['bot']
         theta_local['bot'] = self.theta_global[3]
         # local angles are calculated by substracting the previous sensors global angle from the current sensors global angle
-        phi_local['top'] = self.angle_diff(
-            self.phi_global_middled['top'],
-            self.phi_global_middled['bot']
-        )
+        phi_local['top'] = self.phi_global_middled['top']
+        #phi_local['top'] = self.angle_diff(
+        #    self.phi_global_middled['bot'],
+        #    self.phi_global_middled['top']
+        #)
         theta_local['top'] = self.theta_global[1] - self.theta_global[3]
         # return the local angles as dicts
         return phi_local, theta_local
@@ -143,7 +144,7 @@ class Gen_coords_imu_acc(Node):
         return filtered
     
     # * helpful functions to not break circle [0, 2pi) bounderies with any operations
-    def angle_diff(self, a, b) -> float: return (a - b + np.pi) % (2*np.pi) - np.pi
+    def angle_diff(self, a, b) -> float: return (a - b) % (2*np.pi)
     def circular_mean(self, angles: list[float]) -> float:
         sin = np.mean(np.sin(angles))
         cos = np.mean(np.cos(angles))
